@@ -1,0 +1,159 @@
+---
+title: "dv_ai_survey"
+author: "CorrelAid e.V."
+date: "12/12/2024"
+format: 
+  html:
+    code-fold: true
+project:
+     execute-dir: project
+---
+```{r}
+#| warning: false
+#| echo: true
+
+library(tidyverse)
+library(here)
+library(ggthemes)
+source(here("helpers.R"))
+source(here("config.R"))
+library(ggplot2); theme_set(theme_few())
+
+primary_color <- "#b2dcb6"
+
+df = readr::read_delim("data/cleaned.csv")
+
+res <- nrow(df)
+cat("Total respondents: ", res, "\n")
+```
+
+
+#### Are people using AI in their organizations?
+
+```{r}
+#| echo: true
+#| warning: false
+#| label: fig-Q3
+
+df_count <- df %>%
+  count(Q3) %>%
+  mutate(percentage = n / sum(n) * 100)
+
+# Plot the data
+ggplot(df_count, aes(x = Q3, y = n)) +
+  geom_bar(stat = "identity", fill = primary_color) + 
+  scale_x_discrete(labels = c("Nein", "Ja", "Keine Antwort")) +
+  geom_text(aes(label = paste0(n , " (", round(percentage, 1), "%)")), 
+            vjust = -0.5,  # Adjust vertical position of the text
+            size = 5) +  # Adjust text size
+  labs(
+    title = str_wrap(Q3_Text, width = 75),
+    x = NULL,
+    y = "Count"
+  ) +
+  expand_limits(y = max(df_count$n) * 1.1)  
+
+```
+
+#### Opinion on AI by Usage
+```{r}
+#| echo: true
+#| warning: false
+#| label: fig-Q9xQ3
+
+df_temp <- df %>%
+  mutate(Q3 = case_when(
+    is.na(Q3) ~ "Keine Antwort",
+    Q3 == TRUE ~ "Ja",
+    Q3 == FALSE ~ "Nein",
+    TRUE ~ as.character(Q3)  
+  )) %>%
+  filter(Q3 != "Keine Antwort")
+
+ggplot(df_temp, aes(x = Q9)) + 
+  geom_density(aes(fill = Q3), color = "black", alpha = 0.5) + 
+  labs(
+    title = str_wrap("KI Nutzung vs Einschätzung", 75),
+    x = "Einschätzung",
+    y = "Density",
+    fill = "KI-Nutzung"  
+  ) +
+  theme(
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank()
+  ) +
+  annotate("text", x = 0, y = -0.0005, label = "Hype", color = "black") +
+  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = "black")
+```
+
+#### What are people using AI for?
+
+```{r}
+#| echo: true
+#| warning: false
+#| label: fig-Q4
+
+cleaned_Q4_Options <- clean_options(Q4_Options)
+
+df_long <- df %>%
+  select(starts_with("Q4"), -Q4_open) %>% 
+  pivot_longer(cols = everything(), 
+               names_to = "Question", 
+               values_to = "Response") %>%
+  filter(Response == TRUE)  
+
+total_responses <- nrow(df_long)
+
+response_counts <- df_long %>%
+  count(Question, name = "Count")
+
+response_counts <- response_counts %>%
+  mutate(Percentage = Count / total_responses * 100)
+
+ggplot(response_counts, aes(x = Question, y = Count)) +
+  geom_bar(stat = "identity", fill = primary_color) +
+  scale_x_discrete(labels = cleaned_Q4_Options) +  
+  geom_text(aes(label = paste(Count, " (", round(Percentage, 1), "%)", sep = "")), 
+            vjust = -0.5,  
+            size = 4) +  
+  labs(
+    title = str_wrap(Q4_Text, width = 75),
+    x = NULL,
+    y = "Count"
+  ) +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  expand_limits(y = max(response_counts$Count) * 1.1)  
+
+```
+
+#### What are the challenges of AI usage?
+
+```{r}
+#| echo: true
+#| label: fig-Q5xQ3
+#| warning: false
+
+df_long <- df %>%
+  select(starts_with("Q5"), Q3, -Q5_open, -Q5_9) %>% 
+  pivot_longer(cols = starts_with("Q5"), 
+               names_to = "question", 
+               values_to = "rank") %>%
+  mutate(question = str_replace(question, "Q5_", ""), 
+         Q3 = factor(Q3, levels = c(FALSE, TRUE), labels = c("Nein", "Ja")),  
+         question = factor(question, levels = as.character(1:length(Q5_Options_cleaned)), 
+                           labels = Q5_Options_cleaned))  
+
+df_filtered <- df_long %>%
+  filter(!is.na(Q3)) 
+
+ggplot(df_filtered, aes(x = rank, fill = Q3, color = Q3)) +
+  geom_histogram(binwidth = 1, alpha = 0.5, position = "identity", boundary = 0) +  
+  scale_x_continuous(breaks = 1:10) +  
+  facet_wrap(~ question, scales = "free_x", ncol = 3) + 
+  labs(title = "Rangliste Herrausforderungen bei der KI-Nutzung:",
+       x = "Rank",
+       y = "Count",
+       fill = "KI-Nutzung",
+       color = "KI-Nutzung") +
+  theme(strip.text = element_text(size = 8))
+```
