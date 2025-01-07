@@ -10,3 +10,8 @@ This repository is utilizing [quarto](https://quarto.org/docs/get-started/) in c
 - for sliders, standardize leaving it on 50 without clicking equals NA
 - provide information on poles of sliders
 - Q3 should have been mandatory 
+
+## Ideas 
+
+- Topic analysis or Summary  of answers to open questions with a self hosted LLM
+- 
