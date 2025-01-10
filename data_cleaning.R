@@ -81,7 +81,8 @@ df <- process_mult_open(
 )
 
 df <- df %>%
-  select(id, date, matches("^Q[0-9](_|$)"))
+  select(id, date, matches("^Q\\d{1,2}(_|$)"))
+
 
 readr::write_csv(df, "data/cleaned.csv")
 
