@@ -1,0 +1,30 @@
+[
+  {
+    "response": "Microsoft Copilot bringt beim Office 365 Abo die beste Kosten Nutzen Bilanz",
+    "extracted_apps": ["Microsoft Copilot"]
+  },
+  {
+    "response": "ChatGBT kostenlos",
+    "extracted_apps": ["ChatGPT"]
+  },
+  {
+    "response": "Copilot und Gemini",
+    "extracted_apps": ["Copilot", "Gemini"]
+  },
+  {
+    "response": "Muß jeder selbst herausfinden",
+    "extracted_apps": null
+  },
+  {
+    "response": "canva kann jetzt auch KI",
+    "extracted_apps": ["Canva"]
+  },
+  {
+    "response": "Chat GTP für gute Kommunikation",
+    "extracted_apps": ["ChatGPT"]
+  },
+  {
+    "response":["Canva für Charities und ChatGPT kostenpflichtige Version"],
+    "extracted_apps": ["Canva", "ChatGPT"]
+  }
+]

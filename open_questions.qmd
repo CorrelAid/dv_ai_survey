@@ -1,0 +1,318 @@
+---
+title: "dv_ai_survey"
+author: "CorrelAid e.V."
+date: "12/12/2024"
+format: 
+  html:
+    code-fold: true
+project:
+     execute-dir: project
+execute:
+  python: ".venv/bin/python"
+  external: true
+jupyter: python3
+---
+
+```{python}
+#| warning: false
+#| echo: true
+
+import polars as pl
+import seaborn as sns
+from matplotlib import pyplot as plt
+import dspy.evaluate
+import matplotlib.pyplot as plt
+from pathlib import Path
+import os
+import pandas as pd
+from dotenv import load_dotenv
+import openai
+import itertools
+from IPython.display import Markdown
+import dspy
+from typing import TypedDict, Union, List, Mapping, Tuple, Callable
+import json
+from concurrent.futures import ThreadPoolExecutor
+from python_tools import load_examples_from_json_wrapper
+import openai
+from bertopic.backend import OpenAIBackend
+from bertopic.representation import OpenAI
+from bertopic import BERTopic
+from sklearn.feature_extraction.text import CountVectorizer
+import nltk
+from nltk.corpus import stopwords
+from sklearn.cluster import KMeans
+from bertopic.representation import KeyBERTInspired, MaximalMarginalRelevance, BaseRepresentation
+from scipy.sparse import csr_matrix
+from tqdm import tqdm
+from umap import UMAP
+from hdbscan import HDBSCAN
+import re
+
+
+nltk.download('stopwords')
+
+# Load environment variables
+load_dotenv()
+
+# Set style for plots (similar to theme_few())
+plt.style.use('seaborn-v0_8-whitegrid')
+
+# Define colors
+primary_color = "#b2dcb6"
+
+# Read the CSV file
+df = pl.read_csv("data/cleaned.csv", null_values=["NA", "NAN"])
+
+# Print total respondents
+res = len(df)
+print(f"Total respondents: {res}")
+```
+
+```{python}
+lm = dspy.LM("openai/VAGOsolutions/Llama-3.1-SauerkrautLM-8b-Instruct-awq", cache=True, temperature=0.3, api_key=os.getenv("PARROTPARK_API_KEY"), base_url="https://api.parrotpark.correlaid.org/v1")
+dspy.configure(lm=lm)
+```
+
+## Q11: Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?
+```{python}
+class AppExtraction(dspy.Signature):
+    """Extract AI app recommendations"""
+    response: list = dspy.InputField(
+        desc="Response to the question: 'Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?'"
+    )
+    extracted_apps: Union[List[str], None] = dspy.OutputField(
+        desc="Common spellings of app recommendations extracted from response, if any."
+    )
+
+fc = lambda x: dspy.Example(
+    response=x['response'], 
+    extracted_apps=x['extracted_apps']  
+).with_inputs("response")
+
+examples = load_examples_from_json_wrapper("data/examples/app_extraction.json", fc)
+
+tp = dspy.LabeledFewShot()
+extractor = dspy.ChainOfThought(AppExtraction)
+
+def validate_answer(example, pred, trace=None):
+    return example["extracted_apps"] == pred["extracted_apps"]
+
+optimizer = dspy.BootstrapFewShot(
+      metric=validate_answer,
+      max_bootstrapped_demos=10,
+      max_rounds=5,
+  )
+opt_extractor = optimizer.compile(student=extractor, trainset=examples)
+```
+
+```{python}
+class AppRecommendationReasonSummary(dspy.Signature):
+    """Summarize the responses to a survey question"""
+    responses: list = dspy.InputField(
+        desc="Responses to the question 'Welche KI-Anwendung empfiehlst du dringend anderen "
+             "Vereinen und wieso?'"
+    )
+    recommended_app: str = dspy.InputField(
+        desc="Standardized name of the recommended AI application, if an app was recommended."
+    )
+    summary: Union[str, None] = dspy.OutputField(
+        desc="Concise summary of given reasons."
+    )
+
+summarizer = dspy.ChainOfThought(AppRecommendationReasonSummary)
+```
+
+```{python}
+def extract_pipeline(docs, max_workers=4):
+    filtered_docs = [x for x in docs if x is not None]
+
+    def process_doc(doc):
+        extracted_apps = opt_extractor(response=doc)["extracted_apps"]
+        if extracted_apps is not None:
+             return {"extracted_apps": extracted_apps, "original_text": doc}
+        return {"extracted_apps": ["Keine Empfehlung"], "original_text": doc}
+
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:  
+        results = list(executor.map(process_doc, filtered_docs))
+    
+    return results  
+
+docs = list([x for x in df["Q11"] if x is not None])
+
+results = extract_pipeline(docs)
+```
+
+```{python}
+
+apps = [app for result in results if result["extracted_apps"] is not None for app in result["extracted_apps"]]
+
+tdf = pl.DataFrame({
+    "extracted_app": apps
+    })
+
+app_groups = {}
+for result in results:
+    apps = result["extracted_apps"]
+    doc = result["original_text"]
+    for app in apps:
+        if app not in app_groups:
+            app_groups[app] = []
+        app_groups[app].append(doc)
+
+final = tdf["extracted_app"].value_counts()
+
+final = final.with_columns(
+    pl.struct(["extracted_app"])
+    .map_elements(
+        lambda x: summarizer(
+            responses=app_groups[x["extracted_app"]], 
+            recommended_app=x["extracted_app"]
+        ).summary,
+        return_dtype=pl.Utf8  # Adjust this to match summarizer's return type
+    )
+    .alias("summary")
+)
+
+final.write_csv("data/open_Q11.csv")
+
+```
+
+```{python}
+sns.barplot(
+    data=final,
+    y="extracted_app",
+    x="count",
+    color=primary_color,
+    alpha=0.8
+)
+
+plt.title('Most Recommended AI Applications', pad=20)
+plt.xlabel('Number of Recommendations')
+plt.ylabel('Application Name')
+
+for i in plt.gca().containers:
+    plt.gca().bar_label(i, padding=5)
+
+plt.tight_layout()
+plt.show()
+```
+
+## Q14: Offene Frage: Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?
+
+```{python}
+docs = [doc for doc in df["Q15"] if doc and len(doc) > 1]
+
+emb_client = openai.OpenAI(api_key=os.getenv("PARROTPARK_API_KEY"), base_url="https://api.parrotpark.correlaid.org/v1")
+embedding_model = OpenAIBackend(emb_client, "openai/jinaai/jina-embeddings-v2-base-de", batch_size=32)
+
+stops = stopwords.words('german') + ["ki", "bzw", "etc"]
+vectorizer_model = CountVectorizer(stop_words=stops)
+
+class DSPyRepresentation(BaseRepresentation):
+    def __init__(self, nr_docs: int = 10, diversity: float = None,
+        doc_length: int = None,
+        tokenizer: Union[str, Callable] = None,):
+
+        self.nr_docs = nr_docs
+        self.diversity = diversity
+        self.doc_length = doc_length
+        self.tokenizer = tokenizer
+
+        self.prompts_ = []
+    def extract_topics(
+        self,
+        topic_model,
+        documents: pd.DataFrame,
+        c_tf_idf: csr_matrix,
+        topics: Mapping[str, List[Tuple[str, float]]],
+    ) -> Mapping[str, List[Tuple[str, float]]]:
+        lm = dspy.LM("openai/VAGOsolutions/Llama-3.1-SauerkrautLM-8b-Instruct-awq", cache=True, temperature=0.4, api_key=os.getenv("PARROTPARK_API_KEY"), base_url="https://api.parrotpark.correlaid.org/v1")
+
+        dspy.configure(lm=lm)
+
+        class TopicSummarizer(dspy.Signature):
+            """Generate a concise label and summary for a cluster of survey responses."""
+            document_cluster: list = dspy.InputField(
+                desc="A cluster of survey responses to the question 'Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?'"
+            )
+            keywords: list = dspy.InputField(
+                desc="A list of keywords extracted from the cluster of responses using TF-IDF"
+            )
+            label: str = dspy.OutputField(
+                desc="A short representative label for all documents in the cluster (in german, 1-4 words)."
+            )
+            description: str = dspy.OutputField(
+                desc="A concise summary of all documents in the cluster (in german, 2-4 sentences)."
+            )
+
+        cluster_summarizer = dspy.ChainOfThought(TopicSummarizer)
+
+        repr_docs_mappings, _, _, _ = topic_model._extract_representative_docs(
+                c_tf_idf, documents, topics, 500, self.nr_docs, self.diversity
+            )
+        
+        updated_topics = {}
+
+        for topic, docs in tqdm(repr_docs_mappings.items(), disable=not topic_model.verbose):
+
+            keywords = ", ".join(list(zip(*topics[topic]))[0])
+
+            result = cluster_summarizer(document_cluster=docs, keywords=keywords)
+
+            self.prompts_.append(lm.history[-1]["prompt"])
+
+            topic_description = f"{result.label}\n{result.description}"
+
+            updated_topics[topic] = [(topic_description, 0)]
+
+        return updated_topics
+
+representation_model = DSPyRepresentation(nr_docs=25)
+
+umap_model = UMAP(n_neighbors=20, n_components=10, 
+                  min_dist=0.0, metric='cosine', random_state=42)
+
+cluster_model = KMeans(n_clusters=4)
+
+topic_model = BERTopic(representation_model=representation_model, embedding_model=embedding_model, vectorizer_model=vectorizer_model, umap_model=umap_model, hdbscan_model=cluster_model)
+
+topics, probs = topic_model.fit_transform(docs)
+
+```
+
+```{python}
+data = {
+    k: re.sub(r'^-?\d+_', '', v.replace('"', '')).strip() 
+    for k, v in topic_model.topic_labels_.items()
+}
+
+tdf = pl.DataFrame({
+    'ID': list(data.keys()),
+    'description': list(data.values())
+})
+
+topic_counts = pl.Series('topic', topics).value_counts()
+topic_counts_dict = dict(zip(
+    topic_counts['topic'],
+    topic_counts['count']
+))
+
+tdf = (tdf
+    .with_columns([
+        pl.col('ID')
+        .cast(pl.Int64)
+        .map_elements(lambda x: topic_counts_dict.get(x, 0), return_dtype=pl.Int64)
+        .alias('Count'),
+
+        pl.col('description')
+        .str.extract(r'^([^\n]+)')
+        .alias('label'),
+
+        pl.col('description')
+        .str.extract(r'(?:^[^\n]+\n\s*)([\s\S]+)$')
+        .alias('description')
+    ]))
+
+tdf.write_csv('data/open_Q15.csv')
+```
