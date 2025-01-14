@@ -157,3 +157,13 @@ ggplot(df_filtered, aes(x = rank, fill = Q3, color = Q3)) +
        color = "KI-Nutzung") +
   theme(strip.text = element_text(size = 8))
 ```
+
+#### 
+
+```{r}
+#| echo: true
+#| label: fig-Q5xQ3
+#| warning: false
+
+df["Q15"]
+```
