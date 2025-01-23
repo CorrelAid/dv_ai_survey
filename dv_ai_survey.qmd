@@ -168,10 +168,12 @@ ggplot(response_counts, aes(x = forcats::fct_reorder(label_clean, Percentage), y
   ) +
   coord_flip()+
   scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 20))
-
 ```
 
 # Herausforderungen
+
+Die wichtigsten drei Herausforderungen
+
 ::: {.panel-tabset}
 
 ## Grafik
@@ -191,6 +193,25 @@ df_long %>%
   scale_y_continuous(transform = "reverse", breaks = seq(min(df_long$rank), max(df_long$rank), 1))+
   coord_flip()+
   labs(x = NULL, y = "Ranking", title = str_wrap("Größte Herausforderungen für aktive Nutzung: Datenschutz und Know-How", width = 60))
+
+```
+
+```{r}
+df_long <- df %>%
+  select(starts_with("Q5"), -Q5_open, -Q5_9) %>% 
+  pivot_longer(cols = starts_with("Q5"), 
+               names_to = "question", 
+               values_to = "rank") %>% 
+  left_join(Q5_Options_cleaned, by = "question")
+df_long %>% 
+  group_by(label) %>% 
+  mutate(med_rank = median(rank)) %>% 
+  group_by(label, med_rank, rank) %>% 
+  summarize(median_rank = mean(med_rank), n = n()) %>% 
+  ggplot(aes(y = n, x = forcats::fct_reorder(label, -med_rank), fill = as.character(rank))) + 
+  geom_col(position = "stack")+
+  coord_flip()+
+  labs(x = NULL)
 ```
 
 ## Daten 
