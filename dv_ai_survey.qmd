@@ -1,5 +1,5 @@
 ---
-title: "dv_ai_survey"
+title: "Analyse der Umfrage: Nutzen von KI im Ehrenamt"
 author: "CorrelAid e.V."
 date: "12/12/2024"
 format: 
@@ -14,7 +14,7 @@ project:
 ---
 ```{r}
 #| warning: false
-
+#| echo: false
 library(tidyverse)
 library(here)
 library(ggthemes)
@@ -22,17 +22,6 @@ library(colorBlindness)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
 library(ggplot2); theme_set(theme_few())
-
-
-df <- readr::read_delim("data/cleaned.csv")
-
-res <- nrow(df)
-
-cat("Total respondents: ", res, "\n")
-```
-
-
-```{r}
 library(showtext)
 library(systemfonts)
 dv_black <- "#20201e"
@@ -56,7 +45,19 @@ theme_set(theme_dv)
 ```
 
 
+```{r}
+#| warning: false
+df <- readr::read_delim("data/cleaned.csv")
+
+res <- nrow(df)
+
+cat("Anzahl der Befragten: ", res, "\n")
+```
+
+
 # KI-Nutzung
+
+Die Mehrheit der Befragten nutzt KI nicht aktiv für die Vereinsarbeit. 20% der Befragten, die diese Frage beantworteten nutzen KI aktiv.
 
 ```{r}
 #| warning: false
@@ -69,24 +70,58 @@ labels <- tibble(
 
 df_count <- df %>%
   count(Q3) %>%
+  arrange(desc(n)) %>%
   mutate(percentage = n / sum(n) * 100) %>% 
   left_join(labels, by = "Q3")
 
-# Plot the data
-ggplot(df_count, aes(x = forcats::fct_reorder(Q3_label, c(2,1,3)), y = n)) +
+ggplot(df_count, aes(y = forcats::fct_reorder(Q3_label, n), x = n)) + 
   geom_bar(stat = "identity", fill = dv_black) + 
   geom_text(aes(label = paste0(n , " (", round(percentage, 1), "%)")), 
-            vjust = -0.5,  # Adjust vertical position of the text
-            size = 5) +  # Adjust text size
+            hjust = -0.2,  
+            size = 5) + 
   labs(
     title = str_wrap(Q3_Text, width = 75),
-    x = NULL,
-    y = "Anzahl",
+    y = NULL,  
+    x = "Anzahl",
     caption = "CC-BY 4.0"
   ) +
-  expand_limits(y = max(df_count$n) * 1.1)  
+  expand_limits(x = max(df_count$n) * 1.2)
 
 ```
+
+## Einschätzung von KI 
+
+Bei der Einordung den Einschätzungen der Befragten zu KI im Ehrenamt auf einer Skala zwischen Hype und Mehrwert herrscht große Uneinigkeit. Die Durchschnittsmeinung liegt fast genau in der Mitte, wobei die Befragten eher entweder zu einem mittleren hohen Wert, oder einem mittleren niedrigem Wert tendieren.
+
+```{r}
+#| warning: false
+#| label: fig-Q9
+ggplot(df, aes(x = Q9)) + 
+  geom_histogram(fill = "steelblue", color = "black", binwidth = 5) +
+  geom_vline(aes(xintercept = mean(Q9, na.rm = TRUE)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  annotate("text", 
+           x = mean(df$Q9, na.rm = TRUE), 
+           y = max(hist(df$Q9, plot = FALSE)$counts), 
+           label = paste("Ø =", round(mean(df$Q9, na.rm = TRUE), 1)),
+           hjust = -0.2) +
+  labs(
+    title = "Verteilung der KI-Einschätzungen",
+    x = "KI-Anwendungen im Verein: Hype oder Mehrwert für das Ehrenamt?",
+    y = "Häufigkeit"
+  ) +
+  theme_minimal() +
+  scale_x_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  ) +
+  annotate("text", x = 0, y = -1, label = "Hype") +
+  annotate("text", x = 98, y = -1, label = "Mehrwert")
+```
+
+## Einschätzung von KI vs. Nutzung
+
+Betrachtet man das Verhältnis von Einschätzung von KI zu deren Nutzung, zeigt sich, dass Befragte die KI nutzen, diese als Mehrwert betrachten und das solche, die dies nicht tun, KI eher als Hype betrachten.
 
 ```{r}
 #| warning: false
@@ -115,27 +150,55 @@ ggplot(df_temp, aes(x = Q9)) +
     axis.ticks.y = element_blank()
   ) +
   annotate("text", x = 0, y = -0.0005, label = "Hype", color = dv_black) +
-  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = dv_black)
+  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = dv_black) 
 ```
 
-## KI ermöglicht...
+## Was ermöglicht KI?
+
+Gefragt danach, was KI in der Vereinsarbeit ermöglicht, so herrscht ebenfalls Uneinigkeit, wobei die mehr befragte angeben, dass KI Zeitersparniss, Effizienzsteigerung und Professionalisierung ermöglicht. Bessere Kommunikation und Erreichbarkeit für Mitglieder scheint, sowie vor allem Transparenz scheint KI in der Vereinsarbeit laut den Befragten nicht zu ermöglichen.
+
 ```{r}
-Q8_Options
+#| warning: false
+#| label: fig-Q8
+#| fig-height: 14
+
 df_opps <- df %>% 
-  select(starts_with("Q8"), -Q8_open) %>% 
+  select(starts_with("Q8")) %>% 
+  select(-Q8_open) %>%
   pivot_longer(cols = everything(), 
                names_to = "question", 
                values_to = "response") %>%
   filter(!is.na(response))  %>% 
-  left_join(Q8_Options, by = "question")
+  left_join(Q8_Options, by = "question") %>%
+  group_by(label) %>%
+  mutate(mean_value = mean(response, na.rm = TRUE)) %>%
+  ungroup()
 
 df_opps %>% 
-  ggplot(aes(x = label, y = response))+
-  geom_boxplot()+
-  coord_flip()
+  ggplot(aes(x = response)) +
+  geom_histogram(binwidth = 5, fill = "steelblue", color = "black") +
+  geom_vline(aes(xintercept = mean_value), color = "red", linetype = "dashed") +
+  geom_text(data = distinct(df_opps, label, mean_value),
+            aes(x = mean_value, y = Inf, label = sprintf("Ø %.1f", mean_value)),
+            vjust = 2, color = "red") +
+  facet_wrap(~reorder(label, -mean_value, mean), ncol = 1) + 
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +  # Added this line
+  labs(
+    x = "Einschätzung",
+    y = "Häufigkeit"
+  ) +
+  theme(
+    strip.text = element_text(angle = 0),
+    strip.background = element_blank(),
+    panel.spacing = unit(1, "cm")  
+  )
+
+
 ```
 
 # Anwendungen von KI
+
+KI wird von den Befragten 
 
 ```{r}
 #| warning: false

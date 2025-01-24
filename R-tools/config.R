@@ -50,10 +50,10 @@ Q7_Text <- "Der Nutzen von KI-Anwendungen für die Vereinsarbeit ist..."
 Q8_Text <- "Meiner Meinung nach ermöglicht die Nutzung von KI in der Vereinsarbeit..."
 Q8_Options <- c(
     "Effizienzsteigerung", "Zeitersparnis",
-    "Bessere Kommunikation und Erreichbarkeit für Mitglieder",
+    "Bessere Kommunikation u. Erreichbarkeit für Mitglieder",
     "Mehr Transparenz in der Vereinsarbeit",
-    "Erleichterung der Entscheidungsfindung durch Datenanalyse",
-    " Professionalisierung der Vereinsarbeit", "Sonstiges und zwar"
+    "Erleichterung Entscheidungsfindung durch Datenanalyse",
+    "Professionalisierung der Vereinsarbeit", "Sonstiges und zwar"
 ) %>% make_options_df(8)
 
 Q9_Text <- "Deine Gesamteinschätzung zu KI-Anwendungen im Verein: Hype oder Mehrwert für das Ehrenamt?"
