@@ -16,8 +16,12 @@ dependencies = [
     "polars>=1.19.0",
     "python-dotenv>=1.0.1",
     "seaborn>=0.13.2",
+    "python_tools"
 ]
 
+[tool.uv.sources]
+python-tools = { workspace = true }
+
 [tool.uv.workspace]
-members = ["python_tools"]
+members = ["python-tools"]
 

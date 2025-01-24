@@ -652,6 +652,7 @@ dependencies = [
     { name = "openai" },
     { name = "polars" },
     { name = "python-dotenv" },
+    { name = "python-tools" },
     { name = "seaborn" },
 ]
 
@@ -667,6 +668,7 @@ requires-dist = [
     { name = "openai", specifier = ">=1.59.6" },
     { name = "polars", specifier = ">=1.19.0" },
     { name = "python-dotenv", specifier = ">=1.0.1" },
+    { name = "python-tools", editable = "python-tools" },
     { name = "seaborn", specifier = ">=0.13.2" },
 ]
 
@@ -2514,7 +2516,7 @@ wheels = [
 [[package]]
 name = "python-tools"
 version = "0.1.0"
-source = { editable = "python_tools" }
+source = { editable = "python-tools" }
 
 [[package]]
 name = "pytz"

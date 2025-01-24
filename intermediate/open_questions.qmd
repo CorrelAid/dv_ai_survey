@@ -62,7 +62,7 @@ plt.style.use('seaborn-v0_8-whitegrid')
 primary_color = "#b2dcb6"
 
 # Read the CSV file
-df = pl.read_csv("data/cleaned.csv", null_values=["NA", "NAN"])
+df = pl.read_csv("../data/cleaned.csv", null_values=["NA", "NAN"])
 
 # Print total respondents
 res = len(df)
@@ -314,5 +314,5 @@ tdf = (tdf
         .alias('description')
     ]))
 
-tdf.write_csv('data/open_Q15.csv')
+tdf.write_csv('../data/open_Q15.csv')
 ```
