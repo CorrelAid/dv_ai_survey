@@ -22,40 +22,6 @@ ul.task-list li input[type="checkbox"] {
   margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
   vertical-align: middle;
 }
-/* CSS for syntax highlighting */
-pre > code.sourceCode { white-space: pre; position: relative; }
-pre > code.sourceCode > span { line-height: 1.25; }
-pre > code.sourceCode > span:empty { height: 1.2em; }
-.sourceCode { overflow: visible; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-div.sourceCode { margin: 1em 0; }
-pre.sourceCode { margin: 0; }
-@media screen {
-div.sourceCode { overflow: auto; }
-}
-@media print {
-pre > code.sourceCode { white-space: pre-wrap; }
-pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
-}
-pre.numberSource code
-  { counter-reset: source-line 0; }
-pre.numberSource code > span
-  { position: relative; left: -4em; counter-increment: source-line; }
-pre.numberSource code > span > a:first-child::before
-  { content: counter(source-line);
-    position: relative; left: -1em; text-align: right; vertical-align: baseline;
-    border: none; display: inline-block;
-    -webkit-touch-callout: none; -webkit-user-select: none;
-    -khtml-user-select: none; -moz-user-select: none;
-    -ms-user-select: none; user-select: none;
-    padding: 0 4px; width: 4em;
-  }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
-div.sourceCode
-  {   }
-@media screen {
-pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
-}
 </style>
 
 
@@ -73,10 +39,28 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="fullcontent">
+<body>
 
-<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article toc-left">
+<div id="quarto-sidebar-toc-left" class="sidebar toc-left">
+  <nav id="TOC" role="doc-toc" class="toc-active" data-toc-expanded="2">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#ki-nutzung" id="toc-ki-nutzung" class="nav-link active" data-scroll-target="#ki-nutzung">KI-Nutzung</a>
+  <ul class="collapse">
+  <li><a href="#ki-ermöglicht" id="toc-ki-ermöglicht" class="nav-link" data-scroll-target="#ki-ermöglicht">KI ermöglicht…</a></li>
+  </ul></li>
+  <li><a href="#anwendungen-von-ki" id="toc-anwendungen-von-ki" class="nav-link" data-scroll-target="#anwendungen-von-ki">Anwendungen von KI</a></li>
+  <li><a href="#herausforderungen" id="toc-herausforderungen" class="nav-link" data-scroll-target="#herausforderungen">Herausforderungen</a>
+  <ul class="collapse">
+  <li><a href="#offene-fragen" id="toc-offene-fragen" class="nav-link" data-scroll-target="#offene-fragen">Offene Fragen</a></li>
+  </ul></li>
+  </ul>
+</nav>
+</div>
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar zindex-bottom">
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -111,49 +95,21 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggthemes)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"helpers.R"</span>))</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="fu">here</span>(<span class="st">"config.R"</span>))</span>
-<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2); <span class="fu">theme_set</span>(<span class="fu">theme_few</span>())</span>
-<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>primary_color <span class="ot">&lt;-</span> <span class="st">"#b2dcb6"</span></span>
-<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>df <span class="ot">=</span> readr<span class="sc">::</span><span class="fu">read_delim</span>(<span class="st">"data/cleaned.csv"</span>)</span>
-<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">nrow</span>(df)</span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Total respondents: "</span>, res, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Total respondents:  217 </code></pre>
 </div>
 </div>
-<section id="are-people-using-ai-in-their-organizations" class="level4">
-<h4 class="anchored" data-anchor-id="are-people-using-ai-in-their-organizations">Are people using AI in their organizations?</h4>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>df_count <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Q3) <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">percentage =</span> n <span class="sc">/</span> <span class="fu">sum</span>(n) <span class="sc">*</span> <span class="dv">100</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Plot the data</span></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_count, <span class="fu">aes</span>(<span class="at">x =</span> Q3, <span class="at">y =</span> n)) <span class="sc">+</span></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">fill =</span> primary_color) <span class="sc">+</span> </span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Nein"</span>, <span class="st">"Ja"</span>, <span class="st">"Keine Antwort"</span>)) <span class="sc">+</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste0</span>(n , <span class="st">" ("</span>, <span class="fu">round</span>(percentage, <span class="dv">1</span>), <span class="st">"%)"</span>)), </span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>,  <span class="co"># Adjust vertical position of the text</span></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">5</span>) <span class="sc">+</span>  <span class="co"># Adjust text size</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">str_wrap</span>(Q3_Text, <span class="at">width =</span> <span class="dv">75</span>),</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Count"</span></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand_limits</span>(<span class="at">y =</span> <span class="fu">max</span>(df_count<span class="sc">$</span>n) <span class="sc">*</span> <span class="fl">1.1</span>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: sysfonts</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Loading required package: showtextdb</code></pre>
+</div>
+</div>
+<section id="ki-nutzung" class="level1">
+<h1>KI-Nutzung</h1>
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-Q3" class="quarto-float quarto-figure quarto-figure-center anchored" width="672">
 <figure class="quarto-float quarto-float-fig figure">
@@ -167,36 +123,7 @@ Figure&nbsp;1
 </div>
 </div>
 </div>
-</section>
-<section id="opinion-on-ai-by-usage" class="level4">
-<h4 class="anchored" data-anchor-id="opinion-on-ai-by-usage">Opinion on AI by Usage</h4>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df_temp <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Q3 =</span> <span class="fu">case_when</span>(</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">is.na</span>(Q3) <span class="sc">~</span> <span class="st">"Keine Antwort"</span>,</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    Q3 <span class="sc">==</span> <span class="cn">TRUE</span> <span class="sc">~</span> <span class="st">"Ja"</span>,</span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    Q3 <span class="sc">==</span> <span class="cn">FALSE</span> <span class="sc">~</span> <span class="st">"Nein"</span>,</span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>    <span class="cn">TRUE</span> <span class="sc">~</span> <span class="fu">as.character</span>(Q3)  </span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">%&gt;%</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Q3 <span class="sc">!=</span> <span class="st">"Keine Antwort"</span>)</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_temp, <span class="fu">aes</span>(<span class="at">x =</span> Q9)) <span class="sc">+</span> </span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="fu">aes</span>(<span class="at">fill =</span> Q3), <span class="at">color =</span> <span class="st">"black"</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>) <span class="sc">+</span> </span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">str_wrap</span>(<span class="st">"KI Nutzung vs Einschätzung"</span>, <span class="dv">75</span>),</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"Einschätzung"</span>,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Density"</span>,</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">fill =</span> <span class="st">"KI-Nutzung"</span>  </span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(</span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.text.y =</span> <span class="fu">element_blank</span>(), </span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">axis.ticks.y =</span> <span class="fu">element_blank</span>()</span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">0</span>, <span class="at">y =</span> <span class="sc">-</span><span class="fl">0.0005</span>, <span class="at">label =</span> <span class="st">"Hype"</span>, <span class="at">color =</span> <span class="st">"black"</span>) <span class="sc">+</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="dv">98</span>, <span class="at">y =</span> <span class="sc">-</span><span class="fl">0.0005</span>, <span class="at">label =</span> <span class="st">"Mehrwert"</span>, <span class="at">color =</span> <span class="st">"black"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 <div class="cell-output-display">
 <div id="fig-Q9xQ3" class="quarto-float quarto-figure quarto-figure-center anchored" width="672">
 <figure class="quarto-float quarto-float-fig figure">
@@ -210,43 +137,32 @@ Figure&nbsp;2
 </div>
 </div>
 </div>
-</section>
-<section id="what-are-people-using-ai-for" class="level4">
-<h4 class="anchored" data-anchor-id="what-are-people-using-ai-for">What are people using AI for?</h4>
+<section id="ki-ermöglicht" class="level2">
+<h2 class="anchored" data-anchor-id="ki-ermöglicht">KI ermöglicht…</h2>
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>cleaned_Q4_Options <span class="ot">&lt;-</span> <span class="fu">clean_options</span>(Q4_Options)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>df_long <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"Q4"</span>), <span class="sc">-</span>Q4_open) <span class="sc">%&gt;%</span> </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">everything</span>(), </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"Question"</span>, </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"Response"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Response <span class="sc">==</span> <span class="cn">TRUE</span>)  </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>total_responses <span class="ot">&lt;-</span> <span class="fu">nrow</span>(df_long)</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>response_counts <span class="ot">&lt;-</span> df_long <span class="sc">%&gt;%</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(Question, <span class="at">name =</span> <span class="st">"Count"</span>)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>response_counts <span class="ot">&lt;-</span> response_counts <span class="sc">%&gt;%</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Percentage =</span> Count <span class="sc">/</span> total_responses <span class="sc">*</span> <span class="dv">100</span>)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(response_counts, <span class="fu">aes</span>(<span class="at">x =</span> Question, <span class="at">y =</span> Count)) <span class="sc">+</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat =</span> <span class="st">"identity"</span>, <span class="at">fill =</span> primary_color) <span class="sc">+</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_discrete</span>(<span class="at">labels =</span> cleaned_Q4_Options) <span class="sc">+</span>  </span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">paste</span>(Count, <span class="st">" ("</span>, <span class="fu">round</span>(Percentage, <span class="dv">1</span>), <span class="st">"%)"</span>, <span class="at">sep =</span> <span class="st">""</span>)), </span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>            <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>,  </span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>            <span class="at">size =</span> <span class="dv">4</span>) <span class="sc">+</span>  </span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="fu">str_wrap</span>(Q4_Text, <span class="at">width =</span> <span class="dv">75</span>),</span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="cn">NULL</span>,</span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="st">"Count"</span></span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">45</span>, <span class="at">hjust =</span> <span class="dv">1</span>)) <span class="sc">+</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">expand_limits</span>(<span class="at">y =</span> <span class="fu">max</span>(response_counts<span class="sc">$</span>Count) <span class="sc">*</span> <span class="fl">1.1</span>)  </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>  question                                                     label
+1     Q8_1                                       Effizienzsteigerung
+2     Q8_2                                             Zeitersparnis
+3     Q8_3   Bessere Kommunikation und Erreichbarkeit für Mitglieder
+4     Q8_4                     Mehr Transparenz in der Vereinsarbeit
+5     Q8_5 Erleichterung der Entscheidungsfindung durch Datenanalyse
+6     Q8_6                    Professionalisierung der Vereinsarbeit
+7     Q8_7                                        Sonstiges und zwar</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dv_ai_survey_files/figure-html/unnamed-chunk-5-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="anwendungen-von-ki" class="level1">
+<h1>Anwendungen von KI</h1>
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-Q4" class="quarto-float quarto-figure quarto-figure-center anchored" width="672">
 <figure class="quarto-float quarto-float-fig figure">
@@ -261,35 +177,131 @@ Figure&nbsp;3
 </div>
 </div>
 </section>
-<section id="what-are-the-challenges-of-ai-usage" class="level4">
-<h4 class="anchored" data-anchor-id="what-are-the-challenges-of-ai-usage">What are the challenges of AI usage?</h4>
+<section id="herausforderungen" class="level1">
+<h1>Herausforderungen</h1>
+<p>Die wichtigsten drei Herausforderungen</p>
+<div class="tabset-margin-container"></div><div class="panel-tabset">
+<ul class="nav nav-tabs" role="tablist"><li class="nav-item" role="presentation"><a class="nav-link active" id="tabset-1-1-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-1" role="tab" aria-controls="tabset-1-1" aria-selected="true" href="">Grafik</a></li><li class="nav-item" role="presentation"><a class="nav-link" id="tabset-1-2-tab" data-bs-toggle="tab" data-bs-target="#tabset-1-2" role="tab" aria-controls="tabset-1-2" aria-selected="false" href="">Daten</a></li></ul>
+<div class="tab-content">
+<div id="tabset-1-1" class="tab-pane active" role="tabpanel" aria-labelledby="tabset-1-1-tab">
 <div class="cell">
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>df_long <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">starts_with</span>(<span class="st">"Q5"</span>), Q3, <span class="sc">-</span>Q5_open, <span class="sc">-</span>Q5_9) <span class="sc">%&gt;%</span> </span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols =</span> <span class="fu">starts_with</span>(<span class="st">"Q5"</span>), </span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to =</span> <span class="st">"question"</span>, </span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"rank"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">question =</span> <span class="fu">str_replace</span>(question, <span class="st">"Q5_"</span>, <span class="st">""</span>), </span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>         <span class="at">Q3 =</span> <span class="fu">factor</span>(Q3, <span class="at">levels =</span> <span class="fu">c</span>(<span class="cn">FALSE</span>, <span class="cn">TRUE</span>), <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"Nein"</span>, <span class="st">"Ja"</span>)),  </span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">question =</span> <span class="fu">factor</span>(question, <span class="at">levels =</span> <span class="fu">as.character</span>(<span class="dv">1</span><span class="sc">:</span><span class="fu">length</span>(Q5_Options_cleaned)), </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                           <span class="at">labels =</span> Q5_Options_cleaned))  </span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>df_filtered <span class="ot">&lt;-</span> df_long <span class="sc">%&gt;%</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Q3)) </span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_filtered, <span class="fu">aes</span>(<span class="at">x =</span> rank, <span class="at">fill =</span> Q3, <span class="at">color =</span> Q3)) <span class="sc">+</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_histogram</span>(<span class="at">binwidth =</span> <span class="dv">1</span>, <span class="at">alpha =</span> <span class="fl">0.5</span>, <span class="at">position =</span> <span class="st">"identity"</span>, <span class="at">boundary =</span> <span class="dv">0</span>) <span class="sc">+</span>  </span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_x_continuous</span>(<span class="at">breaks =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>) <span class="sc">+</span>  </span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span> question, <span class="at">scales =</span> <span class="st">"free_x"</span>, <span class="at">ncol =</span> <span class="dv">3</span>) <span class="sc">+</span> </span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Rangliste Herrausforderungen bei der KI-Nutzung:"</span>,</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">x =</span> <span class="st">"Rank"</span>,</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="st">"Count"</span>,</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill =</span> <span class="st">"KI-Nutzung"</span>,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">color =</span> <span class="st">"KI-Nutzung"</span>) <span class="sc">+</span></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">strip.text =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dv_ai_survey_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<div class="cell-output cell-output-stderr">
+<pre><code>`summarise()` has grouped output by 'label', 'med_rank'. You can override using
+the `.groups` argument.</code></pre>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="dv_ai_survey_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</div>
+<div id="tabset-1-2" class="tab-pane" role="tabpanel" aria-labelledby="tabset-1-2-tab">
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 24%">
+<col style="width: 17%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">label</th>
+<th style="text-align: right;">mittelwert_rank</th>
+<th style="text-align: right;">median_rank</th>
+<th style="text-align: right;">quantil_25</th>
+<th style="text-align: right;">quantil_75</th>
+<th style="text-align: right;">interquartilsabstand</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Auswahlschwierigkeiten</td>
+<td style="text-align: right;">4.25</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">5</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Datenschutz</td>
+<td style="text-align: right;">3.06</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ethische Bedenken</td>
+<td style="text-align: right;">6.12</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hohe Kosten</td>
+<td style="text-align: right;">4.76</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Know-how</td>
+<td style="text-align: right;">3.00</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kosten-Nutzen-Relation</td>
+<td style="text-align: right;">6.49</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Skepsis</td>
+<td style="text-align: right;">4.40</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Techn. Schwierigkeiten</td>
+<td style="text-align: right;">4.41</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-Q5xQ3" class="quarto-float quarto-figure quarto-figure-center anchored" width="672">
 <figure class="quarto-float quarto-float-fig figure">
@@ -303,6 +315,87 @@ Figure&nbsp;4
 </div>
 </div>
 </div>
+<section id="offene-fragen" class="level3">
+<h3 class="anchored" data-anchor-id="offene-fragen">Offene Fragen</h3>
+<section id="welche-ki-anwendung-empfiehlst-du-dringend-anderen-vereinen-und-wieso" class="level4">
+<h4 class="anchored" data-anchor-id="welche-ki-anwendung-empfiehlst-du-dringend-anderen-vereinen-und-wieso">Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?</h4>
+<p>Die Top 3 dringenden Empfehlungen wurden folgendermaßen begründet:</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 8%">
+<col style="width: 88%">
+<col style="width: 3%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">App</th>
+<th style="text-align: left;">Zusammenfassung</th>
+<th style="text-align: right;">Anzahl</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ChatGPT</td>
+<td style="text-align: left;">ChatGPT wird aufgrund seiner Bedienbarkeit, seiner Schnelligkeit, seiner Kostenlosigkeit und seiner Vielseitigkeit empfohlen.</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Keine Empfehlung</td>
+<td style="text-align: left;">Keine klare Empfehlung, da die Wahl einer KI-Anwendung von den spezifischen Bedürfnissen des Vereins abhängt.</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Canva</td>
+<td style="text-align: left;">Canva wird aufgrund seiner Fähigkeit, Charities zu unterstützen, empfohlen, da es die Integration von KI-Funktionen und die einfache Betreuung von Social-Media-Kanälen bietet.</td>
+<td style="text-align: right;">5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="wenn-du-einem-entwickler-von-ki-etwas-mit-auf-den-weg-geben-könntest-was-wäre-es-was-denkst-du-sollte-man-bei-der-entwicklung-von-ki-anwendungen-besonders-berücksichtigen" class="level4">
+<h4 class="anchored" data-anchor-id="wenn-du-einem-entwickler-von-ki-etwas-mit-auf-den-weg-geben-könntest-was-wäre-es-was-denkst-du-sollte-man-bei-der-entwicklung-von-ki-anwendungen-besonders-berücksichtigen">Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?</h4>
+<p>Es wurden drei Themen in den Antworten identifiziert:</p>
+<div class="cell">
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 95%">
+<col style="width: 0%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Name</th>
+<th style="text-align: left;">Beschreibung</th>
+<th style="text-align: right;">Anzahl</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">KI verantwortungsbewusst entwickeln</td>
+<td style="text-align: left;">Die Befragten betonen, dass KI-Entwickler verantwortungsbewusst vorgehen müssen, um sicherzustellen, dass die Anwendungen ethisch vertretbar sind und die Rechte der Menschen schützen. Sie fordern Transparenz in der KI-Entwicklung, einschließlich der Verwendung von Daten und der Vermeidung von Missbrauch. Gleichzeitig sehen sie die Vorteile von KI bei der Arbeit und in der Gesellschaft, solange diese auf eine verantwortungsbewusste und nachvollziehbare Weise eingesetzt werden. Die Befragten betonen auch, dass KI nicht die Kontrolle übernehmen darf und dass die Anwender immer im Mittelpunkt stehen sollten. Dieses Eintreten für verantwortungsbewusstes Vorgehen bei der KI-Entwicklung und die Betonung der Bedeutung von Transparenz und Menschenrechten spiegelt ein Engagement für ethische und nachhaltige Technologieentwicklung wider.</td>
+<td style="text-align: right;">40</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Einfache Bedienung</td>
+<td style="text-align: left;">Die Befragten betonen die Bedeutung von Usability und Einfachheit in der Entwicklung von KI-Anwendungen. Sie möchten, dass Anwendungen so einfach und verständlich wie möglich sind, damit auch Nicht-Profis sie nutzen können. Insbesondere sollten Anwendungen älteren Menschen zugänglich sein, um ihre Scheu gegenüber KI zu überwinden. Die Befragten betonen auch, dass die Bedienung nicht zu kompliziert sein sollte und dass Lösungen einfach zu implementieren sein sollten, um rasch Mehrwert zu bieten. Dies erfordert, dass die Entwickler die Bedürfnisse ihrer Zielgruppe verstehen und entsprechende Anwendungen entwickeln, die leicht zu bedienen sind und gleichzeitig effektiv sind.</td>
+<td style="text-align: right;">21</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Transparenz und Schutz</td>
+<td style="text-align: left;">Die Clusteranalyse ergibt, dass die Befragten die Bedeutung von Transparenz in der Entwicklung von KI-Anwendungen betonen. Sie fordern Transparenz in der Datenverarbeitung, in der Entscheidungsfindung und in der Verwendung von Quellen. Zudem betonen sie die Bedeutung von Schutz, insbesondere des Kinderschutzes und der Vermeidung von Fakenews. Die Analyse zeigt auch, dass die Befragten die Vermeidung von Fehlinformationen und die Gewährleistung von Verständlichkeit für Benutzer als wichtige Aspekte der KI-Entwicklung betrachten.</td>
+<td style="text-align: right;">18</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
 </section>
 
 </main>

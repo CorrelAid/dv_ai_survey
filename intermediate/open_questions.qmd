@@ -72,6 +72,22 @@ print(f"Total respondents: {res}")
 ```{python}
 lm = dspy.LM("openai/VAGOsolutions/Llama-3.1-SauerkrautLM-8b-Instruct-awq", cache=True, temperature=0.3, api_key=os.getenv("PARROTPARK_API_KEY"), base_url="https://api.parrotpark.correlaid.org/v1")
 dspy.configure(lm=lm)
+
+def lost_in_the_middle_ranker(docs):
+    """
+    Reorders documents such that the most relevant documents are placed at the start and end of the reordered list, while the least relevant documents are put in the middle. https://arxiv.org/abs/2307.03172
+    """
+    n = len(docs)
+    reordered_docs = []
+
+    left = docs[:n // 2]  
+    left_left = left[:n // 2]
+    left_right = left[:n // 2:][::-1]
+    right = docs[n // 2:]
+
+    reordered_docs = left_left + right + left_right
+
+    return reordered_docs
 ```
 
 ## Q11: Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?
@@ -90,7 +106,7 @@ fc = lambda x: dspy.Example(
     extracted_apps=x['extracted_apps']  
 ).with_inputs("response")
 
-examples = load_examples_from_json_wrapper("data/examples/app_extraction.json", fc)
+examples = load_examples_from_json_wrapper("../data/examples/app_extraction.json", fc)
 
 tp = dspy.LabeledFewShot()
 extractor = dspy.ChainOfThought(AppExtraction)
@@ -124,8 +140,26 @@ summarizer = dspy.ChainOfThought(AppRecommendationReasonSummary)
 ```
 
 ```{python}
+class LanguageImprover(dspy.Signature):
+    """Verbessert grammatikalische Korrektheit von deutschen Texten."""
+    input_text: str = dspy.InputField(
+        desc="Der Text, der überarbeitet werden soll"
+    )
+    output_text: str = dspy.OutputField(
+        desc="""Der überarbeitete Text mit korekter Grammatik. 
+        - Der Inhalt und die ungefähre Länge sollen **unverändert** bleiben
+        - Es sollen **nur** grammatikalische Korrekturen vorgenommen werden. 
+        - Wörter wie 'Charities' oder Eigennamen sollen **nicht** übersetzt oder anderweitig verändert werden.
+        - Es sollen **keine** Zeilenumbrüche hinzugefügt werden."""
+    )
+
+
+language_improver = dspy.ChainOfThought(LanguageImprover)
+```
+
+```{python}
 def extract_pipeline(docs, max_workers=4):
-    filtered_docs = [x for x in docs if x is not None]
+    filtered_docs = lost[x for x in docs if x is not None]
 
     def process_doc(doc):
         extracted_apps = opt_extractor(response=doc)["extracted_apps"]
@@ -165,16 +199,16 @@ final = tdf["extracted_app"].value_counts()
 final = final.with_columns(
     pl.struct(["extracted_app"])
     .map_elements(
-        lambda x: summarizer(
+        lambda x: language_improver(input_text=summarizer(
             responses=app_groups[x["extracted_app"]], 
             recommended_app=x["extracted_app"]
-        ).summary,
-        return_dtype=pl.Utf8  # Adjust this to match summarizer's return type
+        ).summary).output_text,
+        return_dtype=pl.Utf8  
     )
     .alias("summary")
 )
 
-final.write_csv("data/open_Q11.csv")
+final.write_csv("../data/open_Q11.csv")
 
 ```
 
@@ -208,6 +242,9 @@ embedding_model = OpenAIBackend(emb_client, "openai/jinaai/jina-embeddings-v2-ba
 
 stops = stopwords.words('german') + ["ki", "bzw", "etc"]
 vectorizer_model = CountVectorizer(stop_words=stops)
+
+
+
 
 class DSPyRepresentation(BaseRepresentation):
     def __init__(self, nr_docs: int = 10, diversity: float = None,
@@ -258,33 +295,34 @@ class DSPyRepresentation(BaseRepresentation):
 
             keywords = ", ".join(list(zip(*topics[topic]))[0])
 
+            docs = lost_in_the_middle_ranker(docs)
+
             result = cluster_summarizer(document_cluster=docs, keywords=keywords)
 
             self.prompts_.append(lm.history[-1]["prompt"])
 
-            topic_description = f"{result.label}\n{result.description}"
+            topic_description = f"{result.label}\n{language_improver(input_text=result.description).output_text}"
 
             updated_topics[topic] = [(topic_description, 0)]
 
         return updated_topics
 
-representation_model = DSPyRepresentation(nr_docs=25)
+representation_model = DSPyRepresentation(nr_docs=20)
 
-umap_model = UMAP(n_neighbors=20, n_components=10, 
-                  min_dist=0.0, metric='cosine', random_state=42)
+umap_model = UMAP(n_components=30, random_state=42)
 
-cluster_model = KMeans(n_clusters=4)
-
-topic_model = BERTopic(representation_model=representation_model, embedding_model=embedding_model, vectorizer_model=vectorizer_model, umap_model=umap_model, hdbscan_model=cluster_model)
+topic_model = BERTopic(representation_model=representation_model, embedding_model=embedding_model, vectorizer_model=vectorizer_model, umap_model=umap_model)
 
 topics, probs = topic_model.fit_transform(docs)
+
+topics = topic_model.reduce_outliers(docs, topics)
 
 ```
 
 ```{python}
 data = {
     k: re.sub(r'^-?\d+_', '', v.replace('"', '')).strip() 
-    for k, v in topic_model.topic_labels_.items()
+    for k, v in topic_model.topic_labels_.items() if not k == -1
 }
 
 tdf = pl.DataFrame({

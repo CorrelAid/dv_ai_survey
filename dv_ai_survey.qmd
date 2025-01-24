@@ -19,8 +19,8 @@ library(tidyverse)
 library(here)
 library(ggthemes)
 library(colorBlindness)
-source(here("helpers.R"))
-source(here("config.R"))
+source(here("R-tools/helpers.R"))
+source(here("R-tools/config.R"))
 library(ggplot2); theme_set(theme_few())
 
 
@@ -257,12 +257,36 @@ ggplot(df_filtered, aes(x = rank, fill = Q3, color = Q3)) +
   theme(strip.text = element_text(size = 8))
 ```
 
-#### 
+### Offene Fragen
 
 ```{r}
-#| echo: true
-#| label: fig-Q5xQ3
 #| warning: false
+#| echo: false
+q11 <- readr::read_delim("data/open_Q11.csv")
 
-df["Q15"]
+q15 <- readr::read_delim("data/open_Q15.csv")
+```
+
+#### Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?
+
+Die Top 3 dringenden Empfehlungen wurden folgendermaßen begründet:
+
+```{r}
+filtered_summaries <- q11 %>%
+  filter(extracted_app %in% c("ChatGPT", "Keine Empfehlung", "Canva")) %>%
+  arrange(desc(count)) %>% 
+  select(extracted_app, summary, count) 
+
+knitr::kable(filtered_summaries, col.names = c("App", "Zusammenfassung", "Anzahl"))
+```
+
+#### Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?
+
+Es wurden drei Themen in den Antworten identifiziert:
+
+```{r}
+q15 %>%
+  arrange(desc(Count)) %>% # Sort by Count
+  select(Name = label, Beschreibung = description, Anzahl = Count) %>% # Reorder and exclude ID
+  knitr::kable(col.names = c("Name", "Beschreibung", "Anzahl"))
 ```
