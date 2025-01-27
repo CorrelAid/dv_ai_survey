@@ -236,11 +236,11 @@ ggplot(response_counts, aes(x = forcats::fct_reorder(label_clean, Percentage), y
   )
 ```
 
-Die Spezifizierungen der Antwortmöglichkeit "Sonstiges" lassen sich wie folgt zusammenfassen:
+Die Spezifizierungen der Antwortmöglichkeit "Sonstiges" lassen sich für diese Fage wie folgt zusammenfassen:
 ```{r}
 summary <- read_file("data/Q4_summary.txt")
 
-cat(strwrap(summary, width = 80), sep = "\n")
+cat(strwrap(summary, width = 60), sep = "\n")
 ```
 
 # Herausforderungen
@@ -342,11 +342,11 @@ q15 <- readr::read_delim("data/open_Q15.csv")
 
 #### Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?
 
-Die Top 3 dringenden Empfehlungen wurden folgendermaßen begründet:
+Dringende Empfehlungen wurden folgendermaßen begründet:
 
 ```{r}
 filtered_summaries <- q11 %>%
-  filter(extracted_app %in% c("ChatGPT", "Keine Empfehlung", "Canva")) %>%
+  filter(count > 4) %>%
   arrange(desc(count)) %>% 
   select(extracted_app, summary, count) 
 
