@@ -146,7 +146,7 @@ class LanguageImprover(dspy.Signature):
         desc="Der Text, der überarbeitet werden soll"
     )
     output_text: str = dspy.OutputField(
-        desc="""Der überarbeitete Text mit korekter Grammatik. 
+        desc="""Der überarbeitete Text mit korrekter deutscher Grammatik. 
         - Der Inhalt und die ungefähre Länge sollen **unverändert** bleiben
         - Es sollen **nur** grammatikalische Korrekturen vorgenommen werden. 
         - Wörter wie 'Charities' oder Eigennamen sollen **nicht** übersetzt oder anderweitig verändert werden.
@@ -318,7 +318,7 @@ topics, probs = topic_model.fit_transform(docs)
 topics = topic_model.reduce_outliers(docs, topics)
 
 ```
-
+## Q4: Offene Frage: Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?
 ```{python}
 data = {
     k: re.sub(r'^-?\d+_', '', v.replace('"', '')).strip() 
@@ -353,4 +353,32 @@ tdf = (tdf
     ]))
 
 tdf.write_csv('../data/open_Q15.csv')
+```
+# Q4: In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:
+```{python}
+responses = [doc for doc in df["Q4_open"] if doc and len(doc) > 1]
+
+class AIUsageSummarizer(dspy.Signature):
+    """
+    Zusammenfassung von Antworten einer Umfrage zur Nutzung von KI.
+    """
+    responses: list = dspy.InputField(
+        desc=(
+            "Eine Liste von offenen Umfrageantworten auf die Frage: 'In den folgenden Bereichen nutze ich KI-Anwendungen für meine Vereinsarbeit aktiv:'"
+        )
+    )
+    summary: str = dspy.OutputField(
+        desc=(
+            "Eine aussagekräftige, kurze Zusammenfassung der Antworten. Enthält Muster mit relevanten Beispielen."
+        )
+    )
+
+
+summarizer = dspy.ChainOfThought(AIUsageSummarizer)
+
+summary = language_improver(input_text=summarizer(responses=responses)["summary"])["output_text"]
+
+with open("../data/Q4_summary.txt", "w", encoding="utf-8") as file:
+    file.write(summary)
+
 ```
