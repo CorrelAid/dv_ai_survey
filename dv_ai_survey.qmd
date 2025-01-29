@@ -24,6 +24,9 @@ source(here("R-tools/config.R"))
 library(ggplot2); theme_set(theme_few())
 library(showtext)
 library(systemfonts)
+library(corrr)
+library(GGally)
+
 dv_black <- "#20201e"
 dv_dark_blue <- "#1d5ca5"
 dv_blue <- "#68aee3"
@@ -57,7 +60,7 @@ cat("Anzahl der Befragten: ", res, "\n")
 
 # KI-Nutzung
 
-Die Mehrheit der Befragten nutzt KI nicht aktiv für die Vereinsarbeit. 20% der Befragten, die diese Frage beantworteten nutzen KI aktiv.
+Die Mehrheit der Befragten nutzt KI nicht aktiv für die Vereinsarbeit. 20% der Befragten, die diese Frage beantworteten, nutzen KI aktiv.
 
 ```{r}
 #| warning: false
@@ -110,7 +113,7 @@ ggplot(df, aes(x = Q9)) +
     x = "KI-Anwendungen im Verein: Hype oder Mehrwert für das Ehrenamt?",
     y = "Häufigkeit"
   ) +
-  theme_minimal() +
+  scale_fill_colorblind() +
   scale_x_continuous(
     breaks = seq(0, 100, 10),
     limits = c(0, 100)
@@ -119,38 +122,140 @@ ggplot(df, aes(x = Q9)) +
   annotate("text", x = 98, y = -1, label = "Mehrwert")
 ```
 
-## Einschätzung von KI vs. Nutzung
 
-Betrachtet man das Verhältnis von Einschätzung von KI zu deren Nutzung, zeigt sich, dass Befragte die KI nutzen, diese als Mehrwert betrachten und das solche, die dies nicht tun, KI eher als Hype betrachten.
-
+## Nutzen von KI
 ```{r}
 #| warning: false
-#| label: fig-Q9xQ3
+#| label: fig-Q7
 
-df_temp <- df %>%
-  mutate(Q3 = case_when(
-    is.na(Q3) ~ "Keine Antwort",
-    Q3 == TRUE ~ "Ja",
-    Q3 == FALSE ~ "Nein",
-    TRUE ~ as.character(Q3)  
-  )) %>%
-  filter(Q3 != "Keine Antwort")
-
-ggplot(df_temp, aes(x = Q9)) + 
-  geom_density(aes(fill = Q3), color = dv_black, alpha = 0.5) + 
-  scale_fill_colorblind()+
+ggplot(df, aes(x = Q7)) + 
+  geom_histogram(binwidth = 5) +
+  geom_vline(aes(xintercept = mean(Q7, na.rm = TRUE)), 
+             color = "red", linetype = "dashed", linewidth = 1) +
+  annotate("text", 
+           x = mean(df$Q7, na.rm = TRUE), 
+           y = max(hist(df$Q7, plot = FALSE)$counts), 
+           label = paste("Ø =", round(mean(df$Q7, na.rm = TRUE), 1)),
+           hjust = -0.2) +
   labs(
-    title = str_wrap("KI Nutzung vs Einschätzung", 75),
-    x = "Einschätzung",
-    y = "Density",
-    fill = "KI-Nutzung"  
+    title = "Der Nutzen von KI-Anwendungen für die Vereinsarbeit",
+    x = "Einschätzung des Nutzens von KI",
+    y = "Anzahl"
   ) +
+  scale_fill_colorblind() +
+  scale_x_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  ) +
+  annotate("text", x = 0, y = -1, label = "Niedrig") +
+  annotate("text", x = 98, y = -1, label = "Hoch")
+```
+
+
+
+## Einschätzung von KI vs. Nutzung
+
+Die Analyse zeigt, dass die Gesamteinschätzung von KI mit deren Nutzung verknüpft ist. Befragte, die KI aktiv nutzen, bewerten diese überwiegend als Mehrwert, während Nicht-Nutzer:innen KI häufiger als Hype wahrnehmen.
+
+Dies wird durch eine moderate positive Korrelation (r = 0.406) zwischen KI Nutzung und Gesamteinschätzung untermauert.
+
+Die Dichotomie zwischen "Hype" und "Mehrwert" wird durch die Verteilung der Einschätzungen klar sichtbar.
+
+```{r}
+df_nna_q3 <- df %>%
+  filter(!is.na(Q3)) %>%
+  filter(!is.na(Q9)) %>%
+  mutate(
+    Q9_binary = if_else(Q9 > 50, TRUE, FALSE)  # Create Q9_binary
+  ) %>%
+  left_join(labels, by = "Q3")  # Add Q3_label to the dataset
+
+cor_result <- cor.test(as.numeric(df_nna_q3$Q3), as.numeric(df_nna_q3$Q9_binary), method = "pearson")
+
+cor_coeff <- round(cor_result$estimate, 3)  
+p_value <- signif(cor_result$p.value, 3)   
+
+group_means <- df_nna_q3 %>%
+  group_by(Q3_label) %>%
+  summarize(mean_Q9 = mean(Q9, na.rm = TRUE))
+
+ggplot(df_nna_q3, aes(x = Q9)) + 
+  geom_density(aes(fill = Q3_label), color = dv_black, alpha = 0.5) + 
+  scale_fill_colorblind(name = "KI Nutzung") +  
+  scale_color_colorblind(name = "Q3") +        
   theme(
     axis.text.y = element_blank(), 
     axis.ticks.y = element_blank()
   ) +
+
+  annotate("text", x = 50, y = 0.02, 
+           label = paste0("r = ", cor_coeff, "\n", "p = ", p_value), 
+           color = dv_black, size = 5, hjust = 0) +
+
+
   annotate("text", x = 0, y = -0.0005, label = "Hype", color = dv_black) +
-  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = dv_black) 
+  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = dv_black) +
+
+  geom_vline(data = group_means, aes(xintercept = mean_Q9, color = Q3_label), 
+             linetype = "dashed", show.legend = FALSE) + 
+
+  geom_text(data = group_means, aes(x = mean_Q9, y = 0.015, 
+           label = paste0("Ø (", Q3_label, "): ", round(mean_Q9, 1))), 
+           size = 4, hjust = -0.1, show.legend = FALSE) + 
+
+  labs(
+    title = str_wrap("KI Nutzung vs Gesamteinschätzung", 75),
+    x = "Gesamteinschätzung",
+    y = "Density"
+  )
+
+
+```
+
+Die Einschätzung der Nützlichkeit von KI zeigt einen ähnlichen Zusammenhang wie deren Gesamteinschätzung. Nutzer:innen von KI bewerten deren Nützlichkeit deutlich höher als Nicht-Nutzer:innen, was durch eine moderate positive Korrelation (r = 0.441) bestätigt wirrd. Während die Bewertungen der Nützlichkeit bei KI-Nutzern:innen stärker im oberen Bereich konzentriert sind, zeigen Nicht-Nutzer:innen eine breitere Verteilung mit einem Schwerpunkt im unteren Bereich.
+
+```{r}
+
+df_nna_q3 <- df %>%
+  filter(!is.na(Q3), !is.na(Q7)) %>%
+  left_join(labels, by = "Q3")  
+
+
+cor_result <- cor.test(as.numeric(df_nna_q3$Q3), df_nna_q3$Q7, method = "pearson")
+cor_coeff <- round(cor_result$estimate, 3)
+p_value <- signif(cor_result$p.value, 3)   
+
+group_means <- df_nna_q3 %>%
+  group_by(Q3_label) %>%
+  summarize(mean_Q7 = mean(Q7, na.rm = TRUE))
+
+ggplot(df_nna_q3, aes(x = Q7, fill = Q3_label)) + 
+  geom_density(alpha = 0.5) + 
+  scale_fill_colorblind() +
+  labs(
+    title = str_wrap("KI Nutzung vs Einschätzung Nützlichkeit", 75),
+    x = "Einschätzung Nützlichkeit",
+    y = "Density",
+    fill = "KI-Nutzung"  
+  ) +
+
+  annotate("text", x = 50, y = 0.02, 
+           label = paste0("r = ", cor_coeff, "\n", "p = ", p_value), 
+           color = "black", size = 5, hjust = 0) +
+  annotate("text", x = 0, y = -0.0005, label = "Niedrig", color = "black") +
+  annotate("text", x = 98, y = -0.0005, label = "Hoch", color = "black") +
+  scale_x_continuous(breaks = seq(0, 100, 10), limits = c(0, 100)) +
+
+  # Add vertical dashed lines for group means
+  geom_vline(data = group_means, aes(xintercept = mean_Q7, color = Q3_label), 
+             linetype = "dashed", show.legend = FALSE) +
+
+  # Add text annotations for group means
+  geom_text(data = group_means, aes(x = mean_Q7, y = 0.015, 
+           label = paste0("Ø (", Q3_label, "): ", round(mean_Q7, 1))), 
+           size = 4, hjust = -0.1, show.legend = FALSE)
+
+
 ```
 
 ## Was ermöglicht KI?
@@ -168,7 +273,7 @@ df_opps <- df %>%
                names_to = "question", 
                values_to = "response") %>%
   filter(!is.na(response)) %>%
-  left_join(Q8_Options, by = "question") %>%
+  left_join(Q8_Options_map, by = "question") %>%
   group_by(label) %>%
   filter(label != "Sonstiges und zwar") %>%
   mutate(mean_value = mean(response, na.rm = TRUE)) %>%
@@ -203,7 +308,7 @@ Die meisten Befragten gaben an, KI für die Öffentlichkeitsarbeit zu nutzen, ge
 #| warning: false
 #| label: fig-Q4
 
-Q4_Options$label_clean <- clean_options(Q4_Options$label)
+Q4_Options_map$label_clean <- clean_options(Q4_Options_map$label)
 
 df_long <- df %>%
   select(starts_with("Q4"), -Q4_open) %>% 
@@ -216,7 +321,7 @@ total_responses <- nrow(df_long)
 
 response_counts <- df_long %>%
   count(question, name = "Count") %>% 
-  left_join(Q4_Options, by = "question")
+  left_join(Q4_Options_map, by = "question")
 
 response_counts <- response_counts %>%
   mutate(Percentage = Count / total_responses * 100) %>%
@@ -243,9 +348,119 @@ summary <- read_file("data/Q4_summary.txt")
 cat(strwrap(summary, width = 60), sep = "\n")
 ```
 
+## Worin soll KI die Befragten unterstützen?
+```{r}
+#| warning: false
+#| label: fig-Q16
+#| fig-height: 14
+
+Q16_Options_map$label_clean <- clean_options(Q16_Options_map$label)
+
+df_long <- df %>%
+  select(starts_with("Q16")) %>%  
+  pivot_longer(cols = everything(), 
+               names_to = "question", 
+               values_to = "response")
+
+response_counts <- df_long %>%
+  group_by(question) %>%
+  summarise(
+    Total = sum(!is.na(response)), 
+    Yes = sum(response == TRUE)    
+  ) %>%
+  mutate(Percentage = Yes / Total * 100) %>%  
+  left_join(Q16_Options_map, by = "question") %>%  
+  filter(Percentage > 5) 
+
+ggplot(response_counts, aes(x = forcats::fct_reorder(label_clean, Percentage), y = Percentage)) +
+  geom_bar(stat = "identity", fill = dv_dark_blue) +
+  labs(
+    title = str_wrap(paste(Q16_Text, " (>5%)"), width = 60),
+    x = NULL,
+    y = "Prozent der befragten Organisationen"
+  ) +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 25)) +
+  theme(
+    plot.margin = margin(20, 20, 20, 50)
+  )
+```
+```{r}
+#| warning: false
+#| label: fig-Q16xQ3
+
+df_long_q3 <- df %>%
+  select(Q3, starts_with("Q16")) %>%
+  pivot_longer(cols = starts_with("Q16"), 
+               names_to = "question", 
+               values_to = "response") %>%
+  filter(!is.na(response) & !is.na(Q3)) %>%  
+  group_by(Q3, question) %>%
+  summarise(
+    Total = n(),  
+    Yes = sum(response == TRUE) 
+  ) %>%
+  mutate(Percentage = Yes / Total * 100) %>%
+  left_join(Q16_Options_map, by = "question")
+
+ggplot(df_long_q3, aes(x = forcats::fct_reorder(label_clean, Percentage), y = Percentage, fill = Q3)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = str_wrap("Q3: Aktive KI-Nutzung vs. Q16: Nutzung von KI-Anwendungen in Vereinsarbeit", width = 60),
+    x = NULL,
+    y = "Prozent der befragten Organisationen"
+  ) +
+  coord_flip() +
+  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 25)) +
+  theme(
+    plot.margin = margin(20, 20, 20, 50)
+  )
+
+
+```
+
+```{r}
+#| warning: false
+#| label: fig-Q16xQ9
+
+df_temp <- df %>%
+  mutate(Q9_binary = ifelse(Q7 > 50, "Valuable", "Hype"))
+  
+df_long_q9 <- df_temp %>%
+  select(Q9_binary, starts_with("Q16")) %>%
+  pivot_longer(cols = starts_with("Q16"), 
+               names_to = "question", 
+               values_to = "response") %>%
+  filter(!is.na(response) & !is.na(Q9_binary)) %>% 
+  group_by(Q9_binary, question) %>%
+  summarise(
+    Total = n(),  
+    Yes = sum(response == TRUE) 
+  ) %>%
+  mutate(Percentage = Yes / Total * 100) %>%
+  left_join(Q16_Options_map, by = "question")
+
+
+ggplot(df_long_q9, aes(x = Percentage, y = forcats::fct_reorder(label_clean, Percentage), fill = Q9_binary)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(
+    title = str_wrap("Q9 (Hype vs. Valuable) vs. Q16: Nutzung von KI-Anwendungen in Vereinsarbeit", width = 60),
+    x = "Prozent der befragten Organisationen",
+    y = NULL,
+    fill = "Q7 Bewertung"
+  ) +
+  scale_x_continuous(limits = c(0, 100), breaks = seq(0, 100, 25)) +
+  theme_minimal() +
+  theme(
+    plot.margin = margin(20, 20, 20, 50),
+    legend.position = "top"
+  )
+```
+
 # Herausforderungen
 
 Die wichtigsten drei Herausforderungen
+
 
 ::: {.panel-tabset}
 
@@ -256,7 +471,7 @@ df_long <- df %>%
   pivot_longer(cols = starts_with("Q5"), 
                names_to = "question", 
                values_to = "rank") %>% 
-  left_join(Q5_Options_cleaned, by = "question")
+  left_join(Q5_Options_cleaned_map, by = "question")
 
 df_long %>% 
   group_by(rank) %>% 
@@ -363,3 +578,97 @@ q15 %>%
   select(Name = label, Beschreibung = description, Anzahl = Count) %>% # Reorder and exclude ID
   knitr::kable(col.names = c("Name", "Beschreibung", "Anzahl"))
 ```
+
+
+### Q8 Meiner Meinung nach ermöglicht die Nutzung von KI in der Vereinsarbeit...
+
+Strong Positive Correlations with sufficient support:
+   Q8.2 (Zeitersparnis) and  Q8.1 (Effizienzsteigerung): Correlation = 0.823
+     Q8.6 (Professionalisierung der Vereinsarbeit) and Q8.1 (Zeitersparnis): Correlation = 0.674
+    Q8.2 (Zeitersparnis) and Q8.6 (Professionalisierung der Vereinsarbeit): Correlation = 0.671
+    Q8_4 (Erleichterung Entscheidungsfindung durch Datenanalyse) and Q8_3 (Mehr Transparenz in der Vereinsarbeit) : Correlation = 0.665
+    
+    
+```{r}
+
+selected_columns <- df %>% select(starts_with("Q8")) %>% select(-Q8_open)
+
+# Create a ggpairs plot
+ggpairs(selected_columns)
+
+```
+
+### Q10 Folgende KI-Anwendungen nutze ich aktiv für meine Vereinsarbeit?
+```{r}
+find_strong_correlations(
+  data = df, 
+  column_selection = starts_with("Q10") & !contains("open"), 
+  options_map = Q10_Options_map
+)
+
+
+```
+
+### New Var LLM Usage
+
+```{r}
+llm_apps_list <- c(
+  "ChatGPT (kostenlose Version)", 
+  "ChatGPT (kostenpflichtige Version)", 
+  "Claude", 
+  "Gemini (Google)", 
+  "Perplexity"
+)
+
+df <- df %>%
+  mutate(
+    llm_apps = if_else(
+      rowSums(sapply(1:nrow(Q10_Options_map), function(i) {
+        Q10_Options_map$label[i] %in% llm_apps_list & get(Q10_Options_map$question[i]) == TRUE
+      })) > 0,
+      1, 0
+    )
+  )
+
+df_opps <- df %>% 
+  select(matches("^Q8_[0-9]+$"), llm_apps) %>%  
+  pivot_longer(cols = starts_with("Q8_"), 
+               names_to = "question", 
+               values_to = "response") %>%
+  filter(!is.na(response)) %>%
+  left_join(Q8_Options_map, by = "question") %>%
+  group_by(label, llm_apps) %>%
+  filter(label != "Sonstiges und zwar") %>%
+  mutate(mean_value = mean(response, na.rm = TRUE)) %>%
+  ungroup()
+
+correlations <- df_opps %>%
+  group_by(label) %>%
+  summarize(correlation = cor(llm_apps, response, use = "complete.obs"))
+
+df_opps %>% 
+  ggplot(aes(x = response, fill = factor(llm_apps))) +
+  geom_histogram(binwidth = 5, position = "stack") + 
+  geom_vline(aes(xintercept = mean_value), 
+             color = "red", linetype = "dashed") +
+  geom_text(data = df_opps %>% distinct(label, mean_value),
+            aes(x = mean_value, y = Inf, label = sprintf("Ø %.1f", mean_value)),
+            vjust = 2, hjust = -0.7, color = "red", inherit.aes = FALSE) +
+  geom_text(data = correlations, 
+            aes(x = -Inf, y = Inf, label = sprintf("r = %.2f", correlation)),
+            vjust = 1.5, hjust = -0.1, color = "black", inherit.aes = FALSE) +
+  facet_wrap(~factor(label, levels = correlations$label[order(-correlations$correlation)]), 
+             ncol = 1, scales = "free_y") + 
+  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_fill_manual(values = c("blue", "orange"), name = "LLM Apps") +
+  labs(
+    x = "Einschätzung (Slider Value)",
+    y = "Häufigkeit (Frequency)",
+    fill = "LLM Apps"
+  ) +
+  theme(
+    strip.text = element_text(angle = 0),
+    strip.background = element_blank(),
+    panel.spacing = unit(1, "cm")
+  )
+  ```

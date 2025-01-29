@@ -1,7 +1,7 @@
 library(tidyverse)
 library(here)
-source(here("helpers.R"))
-source(here("config.R"))
+source(here("R-tools/helpers.R"))
+source(here("R-tools/config.R"))
 
 df <- readr::read_delim("data/results.csv", delim = ";")
 

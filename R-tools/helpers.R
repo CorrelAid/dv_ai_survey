@@ -191,3 +191,56 @@ clean_options <- function(options) {
 #     color = "red", 
 #     fill = "red"
 #   )
+
+
+find_strong_correlations <- function(data, column_selection, options_map = NULL, correlation_threshold = 0.5, p_value_threshold = 0.05) {
+  selected_data <- data %>% select({{ column_selection }})
+
+  strong_correlations <- list()
+
+  for (i in 1:(ncol(selected_data) - 1)) {
+    for (j in (i + 1):ncol(selected_data)) {
+      crosstable <- table(selected_data[[i]], selected_data[[j]])
+
+      correlation_test <- cor.test(as.numeric(selected_data[[i]]), as.numeric(selected_data[[j]]), method = "pearson")
+      phi_correlation <- correlation_test$estimate
+      p_value <- correlation_test$p.value
+
+      # Check for strong correlations with p-value significance
+      if (!is.na(phi_correlation) && abs(phi_correlation) > correlation_threshold && p_value < p_value_threshold) {
+        question_1_label <- if (!is.null(options_map)) {
+          options_map$label[options_map$question == names(selected_data)[i]]
+        } else {
+          names(selected_data)[i]
+        }
+        question_2_label <- if (!is.null(options_map)) {
+          options_map$label[options_map$question == names(selected_data)[j]]
+        } else {
+          names(selected_data)[j]
+        }
+
+        strong_correlations[[paste0(names(selected_data)[i], " vs ", names(selected_data)[j])]] <- list(
+          Crosstable = crosstable,
+          Phi_Correlation = round(phi_correlation, 2),
+          P_Value = round(p_value, 4),
+          Question_Names = list(
+            Q1 = question_1_label,
+            Q2 = question_2_label
+          )
+        )
+      }
+    }
+  }
+  
+  if (length(strong_correlations) > 0) {
+    for (pair in names(strong_correlations)) {
+      cat("\n", pair, "\n")
+      cat(strong_correlations[[pair]]$Question_Names$Q1 , " vs. ", strong_correlations[[pair]]$Question_Names$Q2)
+      print(strong_correlations[[pair]]$Crosstable)
+      cat("Phi Correlation:", strong_correlations[[pair]]$Phi_Correlation, "\n")
+      cat("P-Value:", strong_correlations[[pair]]$P_Value, "\n")
+    }
+  } else {
+    cat("No strong correlations found.\n")
+  }
+}
