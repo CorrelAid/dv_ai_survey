@@ -60,13 +60,13 @@ process_mult_open <- function(
   }
 
   # If booleanize is TRUE, convert multiple choice columns to logical (TRUE/FALSE)
- if (booleanize) {
-  df <- df %>%
-    dplyr::mutate(across(
-      .cols = dplyr::starts_with(question_name) & !dplyr::matches("_open"),
-      .fns = ~ ifelse(is.na(.), FALSE, TRUE)
-    ))
-}
+  if (booleanize) {
+    df <- df %>%
+      dplyr::mutate(across(
+        .cols = dplyr::starts_with(question_name) & !dplyr::matches("_open"),
+        .fns = ~ ifelse(is.na(.), FALSE, TRUE)
+      ))
+  }
 
   # Map options to numerical values and rename columns accordingly
   options_mapping <- setNames(1:length(options), options)
@@ -137,13 +137,13 @@ process_sc <- function(df, question_number) {
 
 #' Process Slider and Open-ended Questions
 #'
-#' This function processes slider-style and  open text questions in a dataframe. 
+#' This function processes slider-style and  open text questions in a dataframe.
 #' It renames the column corresponding to the slider question based on the given question number.
 #'
 #' @param df Dataframe containing the survey data.
 #' @param question_number The question number for the slider open text field.
 #' @param question_text The exact text of the slider question as it appears in the dataframe.
-#' 
+#'
 #' @return A dataframe with the renamed slider and open-ended question column.
 process_slider_ot <- function(df, question_number, question_text) {
   # Create the question name based on the question number
@@ -162,51 +162,54 @@ process_slider_ot <- function(df, question_number, question_text) {
 clean_options <- function(options) {
   # Remove text inside parentheses
   cleaned_options <- gsub("\\s?\\(.*\\)", "", options)
-  
+
   # Replace the last value with "Sonstiges"
   cleaned_options[length(cleaned_options)] <- "Sonstiges"
-  
+
   return(cleaned_options)
 }
 
 
-# ggplot(df, aes(x = Q9, y= Q9)) + 
-#   geom_boxplot(fill = primary_color, color = "black") + 
+# ggplot(df, aes(x = Q9, y= Q9)) +
+#   geom_boxplot(fill = primary_color, color = "black") +
 #   labs(
 #     title = "KI: Hype oder Mehrwert für das Ehrenamt?",
 #     x = "Einschätzung",
 #     y = NULL
 #   ) +
 #    theme(
-#     axis.text.y = element_blank(), 
+#     axis.text.y = element_blank(),
 #     axis.ticks.y = element_blank()
 #   ) +
 #   annotate("text", x = 0, y = -0.5, label = "Hype", color = "black") +
 #   annotate("text", x = 98, y = -0.5, label = "Mehrwert", color = "black") +
 #   stat_summary(
-#     fun = "mean", 
-#     geom = "point", 
-#     shape = 23, 
-#     size = 4, 
-#     color = "red", 
+#     fun = "mean",
+#     geom = "point",
+#     shape = 23,
+#     size = 4,
+#     color = "red",
 #     fill = "red"
 #   )
 
-
-find_strong_correlations <- function(data, column_selection, options_map = NULL, correlation_threshold = 0.5, p_value_threshold = 0.05) {
+find_strong_correlations <- function(data, column_selection, options_map = NULL, correlation_threshold = 0.5, p_value_threshold = 0.05, support_threshold = 10) {
   selected_data <- data %>% select({{ column_selection }})
 
   strong_correlations <- list()
 
   for (i in 1:(ncol(selected_data) - 1)) {
     for (j in (i + 1):ncol(selected_data)) {
+      support_var1 <- sum(selected_data[[i]] == TRUE)  # Count TRUE for variable 1
+      support_var2 <- sum(selected_data[[j]] == TRUE)  # Count TRUE for variable 2
+      support <- max(support_var1, support_var2)  # Max TRUE value across the two variables
+      if (support < support_threshold) next
+
       crosstable <- table(selected_data[[i]], selected_data[[j]])
 
-      correlation_test <- cor.test(as.numeric(selected_data[[i]]), as.numeric(selected_data[[j]]), method = "pearson")
-      phi_correlation <- correlation_test$estimate
-      p_value <- correlation_test$p.value
+      # Calculate Phi coefficient for binary data
+      phi_correlation <- sqrt(chisq.test(crosstable)$statistic / sum(crosstable))
+      p_value <- chisq.test(crosstable)$p.value
 
-      # Check for strong correlations with p-value significance
       if (!is.na(phi_correlation) && abs(phi_correlation) > correlation_threshold && p_value < p_value_threshold) {
         question_1_label <- if (!is.null(options_map)) {
           options_map$label[options_map$question == names(selected_data)[i]]
@@ -223,6 +226,7 @@ find_strong_correlations <- function(data, column_selection, options_map = NULL,
           Crosstable = crosstable,
           Phi_Correlation = round(phi_correlation, 2),
           P_Value = round(p_value, 4),
+          Support = support,
           Question_Names = list(
             Q1 = question_1_label,
             Q2 = question_2_label
@@ -231,14 +235,16 @@ find_strong_correlations <- function(data, column_selection, options_map = NULL,
       }
     }
   }
-  
+
   if (length(strong_correlations) > 0) {
-    for (pair in names(strong_correlations)) {
+    sorted_pairs <- names(strong_correlations)[order(sapply(strong_correlations, function(x) abs(x$Phi_Correlation)), decreasing = TRUE)]
+    for (pair in sorted_pairs) {
       cat("\n", pair, "\n")
-      cat(strong_correlations[[pair]]$Question_Names$Q1 , " vs. ", strong_correlations[[pair]]$Question_Names$Q2)
+      cat(strong_correlations[[pair]]$Question_Names$Q1 , " vs. ", strong_correlations[[pair]]$Question_Names$Q2, "\n")
       print(strong_correlations[[pair]]$Crosstable)
       cat("Phi Correlation:", strong_correlations[[pair]]$Phi_Correlation, "\n")
       cat("P-Value:", strong_correlations[[pair]]$P_Value, "\n")
+      cat("Support (Max TRUE):", strong_correlations[[pair]]$Support, "\n")
     }
   } else {
     cat("No strong correlations found.\n")

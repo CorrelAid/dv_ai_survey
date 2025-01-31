@@ -50,7 +50,7 @@ theme_set(theme_dv)
 
 ```{r}
 #| warning: false
-df <- readr::read_delim("data/cleaned.csv")
+df <- readr::read_delim("data/final.csv")
 
 res <- nrow(df)
 
@@ -64,20 +64,21 @@ Die Mehrheit der Befragten nutzt KI nicht aktiv für die Vereinsarbeit. 20% der 
 
 ```{r}
 #| warning: false
-#| label: fig-Q3
+#| label: fig-KI-usage
+
 
 labels <- tibble(
-  Q3 = c(TRUE, FALSE, NA),
-  Q3_label = c("Ja", "Nein", "Keine Antwort")
+  ki_usage = c(TRUE, FALSE, NA),
+   ki_usage_label = c("Ja", "Nein", "Keine Antwort")
 )
 
 df_count <- df %>%
-  count(Q3) %>%
+  count( ki_usage) %>%
   arrange(desc(n)) %>%
   mutate(percentage = n / sum(n) * 100) %>% 
-  left_join(labels, by = "Q3")
+  left_join(labels, by = "ki_usage")
 
-ggplot(df_count, aes(y = forcats::fct_reorder(Q3_label, n), x = n)) + 
+ggplot(df_count, aes(y = forcats::fct_reorder(ki_usage_label, n), x = n)) + 
   geom_bar(stat = "identity", fill = dv_black) + 
   geom_text(aes(label = paste0(n , " (", round(percentage, 1), "%)")), 
             hjust = -0.2,  
@@ -162,51 +163,51 @@ Dies wird durch eine moderate positive Korrelation (r = 0.406) zwischen KI Nutzu
 Die Dichotomie zwischen "Hype" und "Mehrwert" wird durch die Verteilung der Einschätzungen klar sichtbar.
 
 ```{r}
-df_nna_q3 <- df %>%
-  filter(!is.na(Q3)) %>%
-  filter(!is.na(Q9)) %>%
-  mutate(
-    Q9_binary = if_else(Q9 > 50, TRUE, FALSE)  # Create Q9_binary
-  ) %>%
-  left_join(labels, by = "Q3")  # Add Q3_label to the dataset
+df_nna_q9 <- df %>%
+  filter(!is.na(Q9)) 
 
-cor_result <- cor.test(as.numeric(df_nna_q3$Q3), as.numeric(df_nna_q3$Q9_binary), method = "pearson")
-
+cor_result <- cor.test(as.numeric(df_nna_q9$ki_usage), df_nna_q9$Q9, method = "pearson")
 cor_coeff <- round(cor_result$estimate, 3)  
 p_value <- signif(cor_result$p.value, 3)   
 
-group_means <- df_nna_q3 %>%
-  group_by(Q3_label) %>%
+group_means <- df_nna_q9 %>%
+  group_by(ki_usage) %>%
   summarize(mean_Q9 = mean(Q9, na.rm = TRUE))
 
-ggplot(df_nna_q3, aes(x = Q9)) + 
-  geom_density(aes(fill = Q3_label), color = dv_black, alpha = 0.5) + 
-  scale_fill_colorblind(name = "KI Nutzung") +  
-  scale_color_colorblind(name = "Q3") +        
+ggplot(df_nna_q9, aes(x = Q9, fill = ki_usage)) + 
+  geom_density(alpha = 0.7, color = "black") +  # Density plot with transparency
+  scale_fill_manual(values = c("black", "#F5C710"), name = "KI Nutzung") +  # Custom colors
+  scale_color_manual(values = c("black", "#F5C710"), name = "KI Nutzung Mittelwert") +  # Custom colors for means
+  theme_minimal() + 
   theme(
     axis.text.y = element_blank(), 
-    axis.ticks.y = element_blank()
+    axis.ticks.y = element_blank(),
+    legend.position = "top"  
   ) +
 
-  annotate("text", x = 50, y = 0.02, 
+  annotate("text", x = 50, y = 0.015, 
            label = paste0("r = ", cor_coeff, "\n", "p = ", p_value), 
-           color = dv_black, size = 5, hjust = 0) +
+           color = "black", size = 5, hjust = 0) +
 
+  annotate("text", x = 5, y = -0.0005, label = "Es gibt keinen Bedarf", color = "black", hjust = 0) +
+  annotate("text", x = 95, y = -0.0005, label = "Es gibt Bedarf", color = "black", hjust = 1) +
 
-  annotate("text", x = 0, y = -0.0005, label = "Hype", color = dv_black) +
-  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = dv_black) +
+  geom_vline(data = group_means, aes(xintercept = mean_Q9, color = ki_usage), 
+             linetype = "dashed", linewidth = 1, show.legend = TRUE) + 
 
-  geom_vline(data = group_means, aes(xintercept = mean_Q9, color = Q3_label), 
-             linetype = "dashed", show.legend = FALSE) + 
-
-  geom_text(data = group_means, aes(x = mean_Q9, y = 0.015, 
-           label = paste0("Ø (", Q3_label, "): ", round(mean_Q9, 1))), 
+  geom_text(data = group_means, aes(x = mean_Q9, y = 0.01, 
+           label = paste0("Ø (", ki_usage, "): ", round(mean_Q9, 1))), 
            size = 4, hjust = -0.1, show.legend = FALSE) + 
 
   labs(
-    title = str_wrap("KI Nutzung vs Gesamteinschätzung", 75),
-    x = "Gesamteinschätzung",
-    y = "Density"
+    title = "Wie hoch ist der Bedarf an KI in deiner Vereinsarbeit?",
+    x = "Bedarf",
+    y = "Dichte"
+  ) +
+
+  scale_x_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
   )
 
 
@@ -267,27 +268,48 @@ Gefragt danach, was KI in der Vereinsarbeit ermöglicht, so herrscht ebenfalls U
 #| label: fig-Q8
 #| fig-height: 14
 
+correlations <- df %>%
+  select(matches("^Q8_[0-9]+$")) %>%
+  map_dbl(~ cor(.x, df$ki_usage, use = "pairwise.complete.obs"))
+
+correlations <- set_names(correlations, names(df %>% select(matches("^Q8_[0-9]+$"))))
+
 df_opps <- df %>% 
-  select(matches("^Q8_[0-9]+$")) %>%  # Removed extra comma
-  pivot_longer(cols = everything(), 
+  select(matches("^Q8_[0-9]+$"), ki_usage) %>%  
+  pivot_longer(cols = matches("^Q8_[0-9]+$"), 
                names_to = "question", 
                values_to = "response") %>%
   filter(!is.na(response)) %>%
   left_join(Q8_Options_map, by = "question") %>%
-  group_by(label) %>%
+  group_by(label, ki_usage) %>%
   filter(label != "Sonstiges und zwar") %>%
-  mutate(mean_value = mean(response, na.rm = TRUE)) %>%
+  mutate(mean_value = mean(response, na.rm = TRUE)) %>%  # Calculate mean
   ungroup()
 
+df_opps <- df_opps %>%
+  mutate(correlation = correlations[question])
+
+annotations <- df_opps %>%
+  distinct(label, ki_usage, mean_value, correlation)
+
 df_opps %>% 
-  ggplot(aes(x = response)) +
-  geom_histogram(binwidth = 5) +
-  geom_vline(aes(xintercept = mean_value), color = "red", linetype = "dashed") +
-  geom_text(data = distinct(df_opps, label, mean_value),
-            aes(x = mean_value, y = Inf, label = sprintf("Ø %.1f", mean_value)),
-            vjust = 2, hjust=-0.7, color = "red") +
-  facet_wrap(~reorder(label, -mean_value, mean), ncol = 1) + 
+  ggplot(aes(x = response, fill = ki_usage)) +
+  geom_histogram(binwidth = 5, position = "identity", alpha = 0.5) +
+  geom_vline(aes(xintercept = mean_value, color = ki_usage), 
+             linetype = "dashed") +
+  geom_text(data = annotations,  
+            aes(x = Inf, y = Inf, 
+                label = sprintf("Corr: %.2f", correlation)),
+            vjust = 2, hjust = 1.1, size = 4, color = "black") +
+  geom_text(data = annotations,
+            aes(x = mean_value, y = Inf, 
+                label = sprintf("Ø %s: %.1f", ki_usage, mean_value),
+                color = ki_usage),
+            vjust = 4, hjust = -0.1) +
+  facet_wrap(~reorder(label, -correlation, mean), ncol = 1) + 
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  scale_fill_colorblind(name = "KI Nutzung") +
+  scale_color_colorblind(name = "KI Nutzung") +
   labs(
     x = "Einschätzung",
     y = "Häufigkeit"
@@ -300,46 +322,7 @@ df_opps %>%
 
 ```
 
-# Anwendungen von KI
 
-Die meisten Befragten gaben an, KI für die Öffentlichkeitsarbeit zu nutzen, gefolgt von Kommunikation. 
-
-```{r}
-#| warning: false
-#| label: fig-Q4
-
-Q4_Options_map$label_clean <- clean_options(Q4_Options_map$label)
-
-df_long <- df %>%
-  select(starts_with("Q4"), -Q4_open) %>% 
-  pivot_longer(cols = everything(), 
-               names_to = "question", 
-               values_to = "response") %>%
-  filter(response == TRUE)  
-
-total_responses <- nrow(df_long)
-
-response_counts <- df_long %>%
-  count(question, name = "Count") %>% 
-  left_join(Q4_Options_map, by = "question")
-
-response_counts <- response_counts %>%
-  mutate(Percentage = Count / total_responses * 100) %>%
-filter(Percentage > 5)
-
-ggplot(response_counts, aes(x = forcats::fct_reorder(label_clean, Percentage), y = Percentage)) +
-  geom_bar(stat = "identity", fill = dv_dark_blue) +
-  labs(
-    title = str_wrap(paste(Q4_Text, " (>5%)"), width = 60),
-    x = NULL,
-    y = "Prozent der befragten Organisationen"
-  ) +
-  coord_flip()+
-  scale_y_continuous(limits = c(0, 50), breaks = seq(0, 50, 10)) +
-  theme(
-    plot.margin = margin(20, 20, 20, 50),
-  )
-```
 
 Die Spezifizierungen der Antwortmöglichkeit "Sonstiges" lassen sich für diese Fage wie folgt zusammenfassen:
 ```{r}
@@ -350,65 +333,30 @@ cat(strwrap(summary, width = 60), sep = "\n")
 
 ## Worin soll KI die Befragten unterstützen?
 ```{r}
-#| warning: false
-#| label: fig-Q16
-#| fig-height: 14
-
-Q16_Options_map$label_clean <- clean_options(Q16_Options_map$label)
-
-df_long <- df %>%
-  select(starts_with("Q16")) %>%  
-  pivot_longer(cols = everything(), 
-               names_to = "question", 
-               values_to = "response")
-
-response_counts <- df_long %>%
-  group_by(question) %>%
-  summarise(
-    Total = sum(!is.na(response)), 
-    Yes = sum(response == TRUE)    
-  ) %>%
-  mutate(Percentage = Yes / Total * 100) %>%  
-  left_join(Q16_Options_map, by = "question") %>%  
-  filter(Percentage > 5) 
-
-ggplot(response_counts, aes(x = forcats::fct_reorder(label_clean, Percentage), y = Percentage)) +
-  geom_bar(stat = "identity", fill = dv_dark_blue) +
-  labs(
-    title = str_wrap(paste(Q16_Text, " (>5%)"), width = 60),
-    x = NULL,
-    y = "Prozent der befragten Organisationen"
-  ) +
-  coord_flip() +
-  scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 25)) +
-  theme(
-    plot.margin = margin(20, 20, 20, 50)
-  )
-```
-```{r}
-#| warning: false
-#| label: fig-Q16xQ3
 
 df_long_q3 <- df %>%
-  select(Q3, starts_with("Q16")) %>%
-  pivot_longer(cols = starts_with("Q16"), 
+  select(Q17_binary, matches("^Q12_[1-9]")) %>%
+  pivot_longer(cols = matches("^Q12_[1-9]"),
                names_to = "question", 
                values_to = "response") %>%
-  filter(!is.na(response) & !is.na(Q3)) %>%  
-  group_by(Q3, question) %>%
+  filter(!is.na(Q17_binary)) %>%  
+  group_by(Q17_binary, question) %>%
   summarise(
-    Total = n(),  
-    Yes = sum(response == TRUE) 
+    Total = sum(!is.na(response)),  # Count non-NA responses
+    Yes = sum(response >= 4, na.rm = TRUE)  # Define "Yes" as responses >= 4
   ) %>%
-  mutate(Percentage = Yes / Total * 100) %>%
-  left_join(Q16_Options_map, by = "question")
+  mutate(Percentage = Yes / Total * 100) %>%  # Calculate Percentage
+  left_join(Q12_Options_map, by = "question") %>%
+  mutate(Q17_binary = ifelse(Q17_binary, "high", "low")) 
 
-ggplot(df_long_q3, aes(x = forcats::fct_reorder(label_clean, Percentage), y = Percentage, fill = Q3)) +
+# Create the plot
+ggplot(df_long_q3, aes(x = forcats::fct_reorder(label, Percentage), y = Percentage, fill = Q17_binary)) +
   geom_bar(stat = "identity", position = "dodge") +
   labs(
-    title = str_wrap("Q3: Aktive KI-Nutzung vs. Q16: Nutzung von KI-Anwendungen in Vereinsarbeit", width = 60),
+    title = "Q12: Werte bei der Nutzung von KI-Anwendungen",
     x = NULL,
-    y = "Prozent der befragten Organisationen"
+    y = "Prozent der befragten Organisationen",
+    fill = "Q17 Binary"  
   ) +
   coord_flip() +
   scale_y_continuous(limits = c(0, 100), breaks = seq(0, 100, 25)) +
@@ -461,7 +409,6 @@ ggplot(df_long_q9, aes(x = Percentage, y = forcats::fct_reorder(label_clean, Per
 
 Die wichtigsten drei Herausforderungen
 
-
 ::: {.panel-tabset}
 
 ## Grafik
@@ -484,22 +431,57 @@ df_long %>%
 
 ```
 
+
+
 ```{r}
+#| warning: false
+#| label: fig-Q5
+#| height: 20
 df_long <- df %>%
   select(starts_with("Q5"), -Q5_open, -Q5_9) %>% 
   pivot_longer(cols = starts_with("Q5"), 
                names_to = "question", 
                values_to = "rank") %>% 
-  left_join(Q5_Options_cleaned, by = "question")
+  left_join(Q5_Options_cleaned_map, by = "question")
+
+total_responses <- nrow(df)
+
 df_long %>% 
-  group_by(label) %>% 
-  mutate(med_rank = median(rank)) %>% 
-  group_by(label, med_rank, rank) %>% 
-  summarize(median_rank = mean(med_rank), n = n()) %>% 
-  ggplot(aes(y = n, x = forcats::fct_reorder(label, -med_rank), fill = as.character(rank))) + 
-  geom_col(position = "stack")+
-  coord_flip()+
-  labs(x = NULL)
+  group_by(label) %>%
+  mutate(mean_rank = mean(rank),
+         sd_rank = sd(rank)) %>%
+  group_by(label, rank) %>%
+  mutate(count = n(),
+         pct = (count/total_responses) * 100) %>%
+  ggplot(aes(x = rank)) + 
+  geom_bar(fill = dv_blue) +
+  # Add mean line with name for legend
+  geom_vline(aes(xintercept = mean_rank, linetype = "Mean"), 
+             color = "blue") +
+  # Define linetypes in scale to create legend
+  scale_linetype_manual(name = NULL,
+                       values = c("Mean" = "dashed")) +
+  geom_label(aes(label = sprintf("μ = %.2f\nσ = %.2f", mean_rank, sd_rank),
+                 x = max(rank), 
+                 y = max(count)),
+             hjust = 1,
+             vjust = 1,
+             fill = "white",
+             label.size = 0.5,
+             alpha = 0.8) +
+  geom_text(stat = "count", 
+            aes(label = sprintf("%d\n(%.1f%%)", 
+                              after_stat(count), 
+                              after_stat(count)/total_responses * 100)),
+            vjust = -0.5) +
+  facet_wrap(~forcats::fct_reorder(label, mean_rank), ncol = 1) +
+  scale_x_continuous(breaks = seq(min(df_long$rank), max(df_long$rank), 1),
+                    trans = "reverse") +
+  labs(x = "Ranking", y = "Count", 
+       title = str_wrap("Größte Herausforderungen für aktive Nutzung: Datenschutz und Know-How", width = 60)) +
+  theme_minimal() +
+  theme(panel.grid.minor = element_blank())
+
 ```
 
 ## Daten 
@@ -591,7 +573,7 @@ Strong Positive Correlations with sufficient support:
     
 ```{r}
 
-selected_columns <- df %>% select(starts_with("Q8")) %>% select(-Q8_open)
+selected_columns <- df %>% select(matches("^Q12_[0-9]+$"))
 
 # Create a ggpairs plot
 ggpairs(selected_columns)
@@ -601,15 +583,36 @@ ggpairs(selected_columns)
 ### Q10 Folgende KI-Anwendungen nutze ich aktiv für meine Vereinsarbeit?
 ```{r}
 find_strong_correlations(
+  support_threshold = 40,
+  correlation_threshold = 0.4,
   data = df, 
   column_selection = starts_with("Q10") & !contains("open"), 
   options_map = Q10_Options_map
 )
+```
 
+
+### Q12 
+```{r}
+q12_columns <- df %>% select(matches("^Q12_[0-9]"))
+
+correlation_matrix <- cor(q12_columns, use = "pairwise.complete.obs")
+
+threshold <- 0.3
+
+cor_df <- as.data.frame(as.table(correlation_matrix))
+
+cor_df <- cor_df[cor_df$Var1 != cor_df$Var2, ]
+
+filtered_correlations <- filtered_correlations[!duplicated(t(apply(filtered_correlations[, 1:2], 1, sort))), ]
+
+# Print the unique filtered correlations
+print(filtered_correlations)
 
 ```
 
 ### New Var LLM Usage
+
 
 ```{r}
 llm_apps_list <- c(
@@ -629,7 +632,11 @@ df <- df %>%
       1, 0
     )
   )
+```
 
+### LLM Usage vs Nutzen von KI
+
+```{r}
 df_opps <- df %>% 
   select(matches("^Q8_[0-9]+$"), llm_apps) %>%  
   pivot_longer(cols = starts_with("Q8_"), 
@@ -646,14 +653,15 @@ correlations <- df_opps %>%
   group_by(label) %>%
   summarize(correlation = cor(llm_apps, response, use = "complete.obs"))
 
+
 df_opps %>% 
   ggplot(aes(x = response, fill = factor(llm_apps))) +
   geom_histogram(binwidth = 5, position = "stack") + 
-  geom_vline(aes(xintercept = mean_value), 
-             color = "red", linetype = "dashed") +
-  geom_text(data = df_opps %>% distinct(label, mean_value),
-            aes(x = mean_value, y = Inf, label = sprintf("Ø %.1f", mean_value)),
-            vjust = 2, hjust = -0.7, color = "red", inherit.aes = FALSE) +
+  geom_vline(aes(xintercept = mean_value, color = factor(llm_apps)), 
+             linetype = "dashed") + # Color by llm_apps
+  geom_text(data = df_opps %>% distinct(label, mean_value, llm_apps),
+            aes(x = mean_value, y = Inf, label = sprintf("Ø %.1f", mean_value), color = factor(llm_apps)),
+            vjust = 2, hjust = -0.7, inherit.aes = FALSE) + # Color by llm_apps
   geom_text(data = correlations, 
             aes(x = -Inf, y = Inf, label = sprintf("r = %.2f", correlation)),
             vjust = 1.5, hjust = -0.1, color = "black", inherit.aes = FALSE) +
@@ -661,6 +669,7 @@ df_opps %>%
              ncol = 1, scales = "free_y") + 
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
   scale_fill_manual(values = c("blue", "orange"), name = "LLM Apps") +
+  scale_color_manual(values = c("blue", "orange"), name = "LLM Apps") + # Add scale_color_manual
   labs(
     x = "Einschätzung (Slider Value)",
     y = "Häufigkeit (Frequency)",
@@ -672,3 +681,154 @@ df_opps %>%
     panel.spacing = unit(1, "cm")
   )
   ```
+
+### LLM Usage vs Challenges
+
+```{r}
+df_opps_q5 <- df %>%  
+  select(matches("^Q5_[0-9]+$"), ki_usage, -matches("Q5_9")) %>%  
+  pivot_longer(cols = starts_with("Q5_"),
+               names_to = "question",
+               values_to = "response") %>%
+  filter(!is.na(response)) %>%
+  left_join(Q5_Options_map, by = "question") %>% 
+  group_by(label, ki_usage) %>%
+  filter(label != "Sonstiges und zwar") %>% 
+  mutate(mean_value = mean(response, na.rm = TRUE)) %>%
+  ungroup()
+
+correlations_q5 <- df_opps_q5 %>% 
+  group_by(label) %>%
+  summarize(correlation = cor(ki_usage, response, use = "complete.obs"))
+
+df_opps_q5 %>%
+  ggplot(aes(x = factor(response), fill = factor(ki_usage))) +
+  geom_bar(position = position_dodge(width = 0.8)) +
+  geom_text(stat = "count", 
+            aes(label = after_stat(count), 
+                y = after_stat(count)), 
+            position = position_dodge(width = 0.8), 
+            vjust = 0.5) +
+  geom_text(data = correlations_q5,
+            aes(x = "5", 
+                y = Inf, 
+                label = sprintf("r = %.2f", correlation)),
+            vjust = 3.5, color = "black", inherit.aes = FALSE) +
+  facet_wrap(~factor(label, levels = correlations_q5$label[order(-correlations_q5$correlation)]), 
+             ncol = 1, scales = "free_y") +
+  scale_fill_manual(values = c("blue", "orange"), name = "LLM Apps") +
+  scale_color_manual(values = c("blue", "orange"), name = "LLM Apps") +
+  labs(
+    x = "Einschätzung (Slider Value)",
+    y = "Häufigkeit (Frequency)",
+    fill = "LLM Apps"
+  ) +
+  theme(
+    strip.text = element_text(angle = 0),
+    strip.background = element_blank(),
+    panel.spacing = unit(1, "cm")
+  )
+
+  ```
+
+
+#### Is KI required
+
+```{r}
+df_nna_q9 <- df %>%
+  filter(!is.na(Q9)) 
+
+cor_result_q9 <- cor.test(as.numeric(df_nna_q9$ki_usage), df_nna_q9$Q9, method = "pearson")
+cor_coeff_q9 <- round(cor_result_q9$estimate, 3)  
+p_value_q9 <- signif(cor_result_q9$p.value, 3)   
+
+group_means_q9 <- df_nna_q9 %>%
+  group_by(ki_usage) %>%
+  summarize(mean_Q9 = mean(Q9, na.rm = TRUE))
+
+plot_q9 <- ggplot(df_nna_q9, aes(x = Q9)) + 
+  geom_density(aes(fill = ki_usage), color = "black", alpha = 0.5) + 
+  scale_fill_manual(values = c("black", "#F5C710"), name = "KI Nutzung") +  
+  scale_color_manual(values = c("black", "#F5C710"), name = "KI Nutzung Mittelwert") +  
+  theme_minimal() +  
+  theme(
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank(),
+    legend.position = "top"
+  ) +
+  annotate("text", x = 50, y = 0.02, 
+           label = paste0("r = ", cor_coeff_q9, "\n", "p = ", p_value_q9), 
+           color = "black", size = 5, hjust = 0) +
+  annotate("text", x = 0, y = -0.0005, label = "Hype", color = "black") +
+  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = "black") +
+  geom_vline(data = group_means_q9, aes(xintercept = mean_Q9, color = ki_usage), 
+             linetype = "dashed", linewidth = 1, show.legend = TRUE) + 
+  geom_text(data = group_means_q9, aes(x = mean_Q9, y = 0.015, 
+           label = paste0("Ø (", ki_usage, "): ", round(mean_Q9, 1))), 
+           size = 4, hjust = -0.1, show.legend = FALSE) + 
+  labs(
+    title = "KI Nutzung vs Gesamteinschätzung (Q9)",
+    x = "Gesamteinschätzung",
+    y = "Dichte"
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  )
+
+group_means_q17 <- df %>%
+  group_by(ki_usage) %>%
+  summarise(mean_q17 = mean(Q17, na.rm = TRUE))
+
+cor_result_q17 <- cor.test(as.numeric(df$ki_usage), df$Q17, method = "pearson")
+cor_coeff_q17 <- round(cor_result_q17$estimate, 3)  
+p_value_q17 <- signif(cor_result_q17$p.value, 3)   
+
+plot_q17 <- ggplot(df, aes(x = Q17)) + 
+  geom_density(aes(fill = ki_usage), color = "black", alpha = 0.5) +  
+  scale_fill_manual(values = c("black", "#F5C710"), name = "KI Nutzung") +  
+  scale_color_manual(values = c("black", "#F5C710"), name = "KI Nutzung Mittelwert") +  
+  theme_minimal() +  
+  theme(
+    axis.text.y = element_blank(), 
+    axis.ticks.y = element_blank(),
+    legend.position = "top"
+  ) +
+  annotate("text", x = 50, y = 0.02, 
+           label = paste0("r = ", cor_coeff_q17, "\n", "p = ", p_value_q17), 
+           color = "black", size = 5, hjust = 0) +
+  annotate("text", x = 5, y = -0.0005, label = "Es gibt keinen Bedarf", color = "black", hjust = 0) +
+  annotate("text", x = 95, y = -0.0005, label = "Es gibt Bedarf", color = "black", hjust = 1) +
+  geom_vline(data = group_means_q17, aes(xintercept = mean_q17, color = ki_usage), 
+             linetype = "dashed", linewidth = 1, show.legend = TRUE) + 
+  geom_text(data = group_means_q17, aes(x = mean_q17, y = 0.015, 
+           label = paste0("Ø (", ki_usage, "): ", round(mean_q17, 1))), 
+           size = 4, hjust = -0.1, show.legend = FALSE) + 
+  labs(
+    title = "Wie hoch ist der Bedarf an KI in deiner Vereinsarbeit? (Q17)",
+    x = "Bedarf",
+    y = "Dichte"
+  ) +
+  scale_x_continuous(
+    breaks = seq(0, 100, 10),
+    limits = c(0, 100)
+  )
+
+grid.arrange(plot_q9, plot_q17, ncol = 1)
+
+```
+
+#### 
+
+```{r}
+library(diptest)
+dip.test(df$Q17)  # Tests for multimodality
+```
+```{r}
+anova_result <- aov(Q17 ~ ki_usage, data = df_clean)
+summary(anova_result)
+```
+
+
+
+

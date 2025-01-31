@@ -24,6 +24,18 @@ Q4_Options <- c(
 
 Q4_Options_map <- Q4_Options %>% make_options_df(4)
 
+Q4_Options_cleaned <- c(
+    "Kommunikation",
+    "Verwaltungsarbeit",
+    "Öffentlichkeitsarbeit",
+    "Veranstaltungsmanagement", 
+    "Fundraising",
+    "Datenanalyse",
+    "Sonstiges"
+)  
+
+Q4_Options_cleaned_map <- Q4_Options_cleaned %>% make_options_df(4)
+
 Q5_Text <- "Folgende Herausforderungen sehe ich bei der aktiven Nutzung von KI-Anwendungen für die Vereinsarbeit? (Pflichtfrage)"
 Q5_Text_cleaned <- "Folgende Herausforderungen sehe ich bei der aktiven Nutzung von KI-Anwendungen für die Vereinsarbeit:"
 Q5_Options <- c(
@@ -76,7 +88,25 @@ Q10_Options <- c(
     "ChatGPT (kostenlose Version)", "ChatGPT (kostenpflichtige Version)", "Microsoft Copilot", "Perplexity", "Claude", "Hugging Face", "Gemini (Google)", "KI-Bildgeneratoren (z.B.: Midjourney, Canva)",
     "Vereinssoftware mit KI-Funktionen (z.B.: Clubdesk, Campai, Lexoffice)", "KI für Social Media Management (z.B.: Hootsuite, Buffer)", "KI basierte Übersetzungstools (z.B.: DeepL)", "Sprachassistenten (z.B.: Alexa)", "Sonstige und zwar:"
 )
+
 Q10_Options_map <- Q10_Options %>% make_options_df(10)
+
+Qapp_labels <- c(
+    "ChatGPT", # Combined 
+    "Microsoft Copilot",
+    "Perplexity",
+    "Claude",
+    "Hugging Face",
+    "Gemini (Google)",
+    "KI-Bildgeneratoren (z.B.: Midjourney, Canva)",
+    "Vereinssoftware mit KI-Funktionen (z.B.: Clubdesk, Campai, Lexoffice)",
+    "KI für Social Media Management (z.B.: Hootsuite, Buffer)",
+    "KI basierte Übersetzungstools (z.B.: DeepL)",
+    "Sprachassistenten (z.B.: Alexa)",
+    "Sonstige und zwar:"
+)
+
+Qapp_map <- make_options_df(Qapp_labels, "app")
 
 
 Q11_Text <- "Welche KI-Anwendung empfiehlst du dringend anderen Vereinen und wieso?"
@@ -96,8 +126,11 @@ Q14_Text <- "Wie wirkt sich KI auf die Werte deines Vereins aus?"
 Q15_Text <- "Offene Frage: Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?"
 
 Q16_Text <- "Worin soll dich KI unterstützen?"
-Q16_Options <- c("Automatisierung von Verwaltungsarbeit", "Datenanalyse und Auswertung (z.B. Trends)", "Mitgliedergewinnung durch Marketing", "Beantworten von Fragen durch Chatbots", "Planung und Organisation von Veranstaltungen (z.B. Einladungen)", "Feedback-Analyse (z.B. Mitgliederzufriedenheit)", "Schulung von Mitgliedern (z.B. E-Learning)", "Sonstiges") 
+Q16_Options <- c("Automatisierung von Verwaltungsarbeit", "Datenanalyse und Auswertung (z.B. Trends)", "Mitgliedergewinnung durch Marketing", "Beantworten von Fragen durch Chatbots", "Planung und Organisation von Veranstaltungen (z.B. Einladungen)", "Feedback-Analyse (z.B. Mitgliederzufriedenheit)", "Schulung von Mitgliedern (z.B. E-Learning)", "Sonstiges")
 Q16_Options_map <- Q16_Options %>% make_options_df(16)
+
+Q16_Options_cleaned <- c("Verwaltungsarbeit", "Datenanalyse", "Marketing", "Chatbots", "Veranstaltungsmanagement", "Feedback-Analyse", "Schulung von Mitgliedern", "Sonstiges") 
+Q16_Options_cleaned_map <- Q16_Options_cleaned %>% make_options_df(16)
 
 Q17_Text <- "Wie hoch ist der Bedarf an KI in deiner Vereinsarbeit?"
 
