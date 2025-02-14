@@ -122,6 +122,75 @@ theme_dv <- function(base_size = 16,
 
 # Scales ------------------------------------------------------------------
 
+## Colours ----------------------------------------------------------------
+
+#' Colour scales based on the design of <digital-vereint.de>
+#'
+#' @param option Which colour palette to use (as defined in `dv_palette`)?
+#' @param reverse Should the order of colours be reversed?
+#' @inheritParams `ggplot2::continuous_scale`
+#' @inheritDotParams `ggplot2::continuous_scale`
+#'
+scale_colour_dv_c <- function(option = "blue",
+                              reverse = FALSE,
+                              guide = "colourbar",
+                              ...) {
+    ggplot2::continuous_scale(
+        aesthetics = "colour",
+        palette = scales::gradient_n_pal(dv_palette(option, reverse)),
+        guide = guide,
+        ...
+    )
+}
+
+scale_fill_dv_c <- function(option = "blue",
+                            reverse = FALSE,
+                            guide = "colourbar",
+                            ...) {
+    ggplot2::continuous_scale(
+        aesthetics = "fill",
+        palette = scales::gradient_n_pal(dv_palette(option, reverse)),
+        guide = guide,
+        ...
+    )
+}
+
+scale_colour_dv_d <- function(...) {
+    ggplot2::discrete_scale(
+        aesthetics = "colour",
+        palette = scales::manual_pal(flat_twist_zip_reverse(
+            dv_palette("blue"),
+            dv_palette("green")
+        )),
+        ...
+    )
+}
+
+scale_fill_dv_d <- function(...) {
+    ggplot2::discrete_scale(
+        aesthetics = "fill",
+        palette = scales::manual_pal(flat_twist_zip_reverse(
+            dv_palette("blue"),
+            dv_palette("green")
+        )),
+        ...
+    )
+}
+
+dv_palette <- function(option = c("blue", "green"), reverse = FALSE) {
+    option <- match.arg(option)
+
+    cols <- switch(option,
+        # Colours from DsiN logo
+        blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
+        green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
+    )
+
+    if (reverse) rev(cols) else cols
+}
+
+## Others -----------------------------------------------------------------
+
 #' Label numbers in decimal format without trailing zeros
 #' For use as `labels` in `ggplot2::scales_*()` functions
 #' @source https://stackoverflow.com/a/58896161
@@ -166,3 +235,10 @@ font_fallback <- function(family, fallback = "") {
 font_is_installed <- function(family) font_match(family) == family
 
 font_match <- function(x) systemfonts::font_info(x)[["family"]][[1]]
+
+flat_twist_zip_reverse <- function(xs, ys) {
+    list(xs, rev(ys)) |>
+        purrr::list_transpose() |>
+        purrr::imap(\(pair, i) if (i %% 2 == 0) rev(pair) else pair) |> 
+        purrr::list_c()
+}
