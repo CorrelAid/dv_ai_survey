@@ -181,9 +181,11 @@ dv_palette <- function(option = c("blue", "green"), reverse = FALSE) {
     option <- match.arg(option)
 
     cols <- switch(option,
-        # Colours from DsiN logo
-        blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
-        green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
+        # Colours from digital vereint
+        blue=c("#020381","#2874fc","#4158d0","#8ed1fc"),
+        green=c("#6ee7b7","#a7f3d0","#22c55e","#4ade80")
+        ####blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
+        ####green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
     )
 
     if (reverse) rev(cols) else cols
