@@ -182,10 +182,12 @@ dv_palette <- function(option = c("blue", "green"), reverse = FALSE) {
 
     cols <- switch(option,
         # Colours from digital vereint
-        blue=c("#020381","#2874fc","#4158d0","#8ed1fc"),
-        green=c("#6ee7b7","#a7f3d0","#22c55e","#4ade80")
-        ####blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
-        ####green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
+        blue = c("#004fa3", "#4158d0", "#2874fc", "#8ed1fc"),
+        green = c("#598000", "#598000", "#88c200", "#33a7b5")
+        ###blue=c("#020381","#2874fc","#4158d0","#8ed1fc"),
+        ###green=c("#6ee7b7","#a7f3d0","#22c55e","#4ade80")
+        ###blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
+        ###green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
     )
 
     if (reverse) rev(cols) else cols
