@@ -126,30 +126,27 @@ theme_dv <- function(base_size = 16,
 
 #' Colour scales based on the design of <digital-vereint.de>
 #'
-#' @param option Which colour palette to use (as defined in `dv_palette`)?
 #' @param reverse Should the order of colours be reversed?
 #' @inheritParams `ggplot2::continuous_scale`
 #' @inheritDotParams `ggplot2::continuous_scale`
 #'
-scale_colour_dv_c <- function(option = "blue",
-                              reverse = FALSE,
+scale_colour_dv_c <- function(reverse = FALSE,
                               guide = "colourbar",
                               ...) {
     ggplot2::continuous_scale(
         aesthetics = "colour",
-        palette = scales::gradient_n_pal(dv_palette(option, reverse)),
+        palette = scales::gradient_n_pal(dv_palette("sequential", reverse)),
         guide = guide,
         ...
     )
 }
 
-scale_fill_dv_c <- function(option = "blue",
-                            reverse = FALSE,
+scale_fill_dv_c <- function(reverse = FALSE,
                             guide = "colourbar",
                             ...) {
     ggplot2::continuous_scale(
         aesthetics = "fill",
-        palette = scales::gradient_n_pal(dv_palette(option, reverse)),
+        palette = scales::gradient_n_pal(dv_palette("sequential", reverse)),
         guide = guide,
         ...
     )
@@ -158,10 +155,7 @@ scale_fill_dv_c <- function(option = "blue",
 scale_colour_dv_d <- function(...) {
     ggplot2::discrete_scale(
         aesthetics = "colour",
-        palette = scales::manual_pal(flat_twist_zip_reverse(
-            dv_palette("blue"),
-            dv_palette("green")
-        )),
+        palette = scales::manual_pal(dv_palette("qualitative")),
         ...
     )
 }
@@ -169,25 +163,31 @@ scale_colour_dv_d <- function(...) {
 scale_fill_dv_d <- function(...) {
     ggplot2::discrete_scale(
         aesthetics = "fill",
-        palette = scales::manual_pal(flat_twist_zip_reverse(
-            dv_palette("blue"),
-            dv_palette("green")
-        )),
+        palette = scales::manual_pal(dv_palette("qualitative")),
         ...
     )
 }
 
-dv_palette <- function(option = c("blue", "green"), reverse = FALSE) {
+dv_palette <- function(option = c("sequential", "qualitative"),
+                       reverse = FALSE) {
     option <- match.arg(option)
 
     cols <- switch(option,
-        # Colours from digital vereint
-        blue = c("#004fa3", "#4158d0", "#2874fc", "#8ed1fc"),
-        green = c("#598000", "#598000", "#88c200", "#33a7b5")
-        ###blue=c("#020381","#2874fc","#4158d0","#8ed1fc"),
-        ###green=c("#6ee7b7","#a7f3d0","#22c55e","#4ade80")
-        ###blue = c("#004c73", "#126fa4", "#32aecc", "#7bcdc8"),
-        ###green = c("#06717a", "#009778", "#64bc47", "#a5ce39")
+        # Darkest blue and lightest green from DV website, but blue darkened and
+        # and green lightened by 10%, then interpolated in HSV space
+        sequential = c(
+            "#003167",
+            "#055975",
+            "#0A827E",
+            "#119068",
+            "#199E4E",
+            "#22AB33",
+            "#42B92C",
+            "#76C637",
+            "#ABD443"
+        ),
+        # Text blue and green from DV website, then each at 50% opacity on white
+        qualitative = c("#004fa3", "#598000", "#7fa7d1", "#adbf7f")
     )
 
     if (reverse) rev(cols) else cols
@@ -239,10 +239,3 @@ font_fallback <- function(family, fallback = "") {
 font_is_installed <- function(family) font_match(family) == family
 
 font_match <- function(x) systemfonts::font_info(x)[["family"]][[1]]
-
-flat_twist_zip_reverse <- function(xs, ys) {
-    list(xs, rev(ys)) |>
-        purrr::list_transpose() |>
-        purrr::imap(\(pair, i) if (i %% 2 == 0) rev(pair) else pair) |> 
-        purrr::list_c()
-}
