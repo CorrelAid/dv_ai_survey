@@ -278,8 +278,8 @@ create_density_plot <- function(data,
 
   if (is.logical(data[[group_var]])) {
     data[[group_var]] <- factor(data[[group_var]], 
-                               levels = c(TRUE, FALSE),
-                               labels = c("Ja", "Nein"))
+                               levels = c(FALSE, TRUE),
+                               labels = c("Nein", "Ja"))
   }
   overall_mean <- mean(data[[x_var]], na.rm = TRUE)
 
