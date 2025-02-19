@@ -1,59 +1,50 @@
 ---
-title: "Analyse der Umfrage: Nutzen von KI im Ehrenamt"
-author: "CorrelAid e.V."
-date: "12/12/2024"
-format: 
+format:
   html:
-    code-fold: false
-    echo: false
-    toc: true
-    toc-location: left
-    toc-expand: 2
-project:
-     execute-dir: project
+    standalone: true
+    section-divs: true
+    html-math-method: mathjax
+    wrap: none
+    default-image-extension: png
+    toc: false
+    # embed-resources: true
+title: 'Analyse der Umfrage: Nutzen von KI im Ehrenamt'
+author: CorrelAid e.V.
+date: 2024-12-12
+document-css: false
+link-citations: true
+date-format: long
+lang: de
 ---
 
----
-```{r}
+```{r setup, include=FALSE}
 #| warning: false
 #| echo: false
+knitr::opts_chunk$set(
+  fig.width = 10,
+  fig.height = 15
+)
+
 library(tidyverse)
 library(here)
-library(ggthemes)
 library(colorBlindness)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
-library(ggplot2); theme_set(theme_few())
+source(here("R-tools/ggplot.R"))
+library(ggplot2)
 library(showtext)
 library(systemfonts)
 library(corrr)
 library(GGally)
+library(grid)
 library(gridExtra)
 
-
-dv_black <- "#20201e"
-dv_dark_blue <- "#1d5ca5"
-dv_blue <- "#68aee3"
-dv_green <- "#75ad3f"
-
-theme_dv <- ggplot2::theme_minimal(
-  base_size = 14,
-  base_family = "Atkinson Hyperlegible"
-) +
-  ggplot2::theme(
-    legend.position = "top",
-    plot.title = element_text(face = "bold", size = 16, colour = dv_black),
-    plot.title.position = "plot"
-  )
-
-options(ggplot2.discrete.colour= palette.colors(4, palette = "R4"))
-
-theme_set(theme_dv)
 ```
 
 
 ```{r}
 #| warning: false
+#| echo: false
 df <- readr::read_delim("data/final.csv")
 
 res <- nrow(df)
@@ -65,13 +56,17 @@ cat("Anzahl der Befragten: ", res, "\n")
 
 ### Anteil der Befragten, die KI aktiv nutzen und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)
 
-–	Insgesamt nutzen 32% der Befragten aktiv KI. Den meisten Einsatz findet KI in der Öffentlichkeitsarbeit. 24.5% aller Befragten setzten KI in diesem Bereich ein, gefolgt von Kommunikation (14.4%). In anderen Bereichen, zum Beispiel in der Verwaltung (1.4%) wird KI eher nicht genutzt. 
-–	Zusammen mit dem hohen Nutzungsanteil von Anwendungen wie ChatGPT, das von 28% aller Befragten und 91% aller KI-Nutzenden genutzt wird, deutet dies darauf hin, dass KI bis jetzt vor allem für die Erstellung von Texten verwendet wird. 
-–	Empfehlungen von ChatGPT werden begründet mit seiner Bedienbarkeit, Schnelligkeit, Kostenlosigkeit und Vielseitigkeit.
-–	Das steht im Gegensatz zu den Bereichen, in denen KI gerne von den Befragten eingesetzt werden würde. Hier wünschen sich 75% aller Befragten einen Einsatz für die Verwaltungsarbeit.
+* Insgesamt nutzen 32% der Befragten aktiv KI. Den meisten Einsatz findet KI in der Öffentlichkeitsarbeit. 24.5% aller Befragten setzten KI in diesem Bereich ein, gefolgt von Kommunikation (14.4%). In anderen Bereichen, zum Beispiel in der Verwaltung (1.4%) wird KI eher nicht genutzt.
+
+* Zusammen mit dem hohen Nutzungsanteil von Anwendungen wie ChatGPT, das von 28% aller Befragten und 91% aller KI-Nutzenden genutzt wird, deutet dies darauf hin, dass KI bis jetzt vor allem für die Erstellung von Texten verwendet wird. 
+
+* Empfehlungen von ChatGPT werden begründet mit seiner Bedienbarkeit, Schnelligkeit, Kostenlosigkeit und Vielseitigkeit.
+
+* Das steht im Gegensatz zu den Bereichen, in denen KI gerne von den Befragten eingesetzt werden würde. Hier wünschen sich 75% aller Befragten einen Einsatz für die Verwaltungsarbeit.
 
 ```{r}
 #| warning: false
+#| echo: false
 #| label: fig-KI-usage
 
 process_usage_data <- function(df, prefix, options_map, type, extra_row = NULL) {
@@ -96,43 +91,44 @@ process_usage_data <- function(df, prefix, options_map, type, extra_row = NULL) 
   return(base_data)
 }
 
-create_usage_plot <- function(data, title, usage_percent = NULL, fill_colors = c("steelblue", "lightgray")) {
-  legend_labels <- if(!is.null(usage_percent)) {
+create_usage_plot <- function(data, title, caption = NULL, usage_percent = NULL, fill_colors = c("#004fa3", "#f2f2f2")) {
+  legend_labels <- if(title=="In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:") {
     c(sprintf("KI-Nutzung (%.1f%%)", usage_percent), "Keine Auswahl")
   } else {
-    c("Gewünschte Nutzung", "Keine Auswahl")
+    c(sprintf("Nutzungswunsch (%.1f%%)", usage_percent), "Keine Auswahl")
   }
 
-  p <- ggplot(data, 
+  p <- ggplot(data,
               aes(x = reorder(label, percent),
                   y = percent,
                   fill = label == "Keine Auswahl")) +
     geom_bar(stat = "identity") +
     coord_flip() +
-    theme_minimal() +
-    theme(
-      legend.position = "top",
-      legend.title = element_blank(),
-      axis.text.y = element_text(size = 10),
-      plot.title = element_text(hjust = 0.5, size = 12),
-      plot.margin = margin(5, 40, 5, 5)
+    theme_dv(
+      base_size = 12,
+      grid = "x"  
     ) +
     scale_fill_manual(
       values = fill_colors,
-      labels = legend_labels
+      labels = legend_labels,
+      name = NULL  
     ) +
     scale_y_continuous(
-      expand = expansion(mult = c(0, 0.1))
+      limits = c(0, 100), 
+      expand = expansion(mult = c(0, 0.1)),
+      labels = label_number_trimmed()
     ) +
     labs(title = title,
          x = "",
-         y = "Prozent") +
+         y = "Prozent",
+         caption = caption) +
     geom_text(aes(label = sprintf("%d (%.1f%%)", Count, percent)),
               hjust = -0.1,
               size = 3)
 
   return(p)
 }
+
 
 
 non_users <- tibble(
@@ -171,26 +167,41 @@ desired_usage <- process_usage_data(
     )
   )
 
-usage_percent <- 100 - current_usage$percent[current_usage$label == "Keine Auswahl"] # Fixed typo
+usage_percent <- 100 - current_usage$percent[current_usage$label == "Keine Auswahl"] 
 
+desired_usage_percent <- 100 - desired_usage$percent[desired_usage$label == "Keine Auswahl"] 
+
+
+# Create the individual plots with simpler titles
 p1 <- create_usage_plot(
   current_usage,
-  "Aktuelle KI-Nutzung (Multiple Choice, >1%)",
-  usage_percent = usage_percent
+  "In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:",
+  caption = "Mehrfachauswahl möglich. Nur Werte >1% dargestellt.",
+  usage_percent = usage_percent,
+  fill_colors = c(dv_palette("qualitative")[1], "#f2f2f2")
 )
 
 p2 <- create_usage_plot(
   desired_usage,
-  "Gewünschte KI-Nutzung (Multiple Choice)",
-  fill_colors = c("forestgreen", "lightgray")
+  "Worin soll dich KI unterstützen?",
+  caption = "Mehrfachauswahl möglich.",
+  usage_percent = desired_usage_percent,  # Changed from desired_usage to desired_usage_percent
+  fill_colors = c(dv_palette("qualitative")[2], "#f2f2f2")
 )
 
-grid.arrange(p1, p2, ncol = 1)
 
+# Arrange plots with an overall title
+grid.arrange(
+  p1, 
+  p2, 
+  ncol = 1)
 
 ```
 
 ```{r}
+#| warning: false
+#| echo: false
+
 df %>%
   select(starts_with("Q10_") & !matches("open$")) %>%
   summarise(across(everything(), sum)) %>%
@@ -219,6 +230,8 @@ df %>%
 ```
 
 ```{r}
+#| warning: false
+#| echo: false
 
 q11 <- readr::read_delim("data/open_Q11.csv")
 
@@ -235,141 +248,140 @@ knitr::kable(filtered_summaries, col.names = c("App", "Zusammenfassung", "Anzahl
 
 ### Verhältnis von KI-Nutzung zur Meinung
 
-–	Die Befragten sind gespaltener Meinung, wenn es um die Gesamteinschätzung von KI angeht. Der Durschnitt der Einschätzung nauf einer Skala von 0 bis 100, wobei 0 für „Hype“ und 100 für „Mehrwert“ steht, liegt bei 47. 
-–	Untersucht man die Verteilung der Einschätzungen, offenbart sich eine zweigipflige Verteilung. Dies deutet auf eine gewisse Polarisierung hin.
-–	Die Analyse zeigt weiterhin, dass die Gesamteinschätzung von KI mit deren Nutzung verknüpft ist. Befragte, die KI aktiv nutzen, bewerten diese überwiegend als Mehrwert, während Nicht-Nutzer:innen KI häufiger als Hype wahrnehmen. 
-–	Die Nutzung von KI hat einen statistisch signifikanten positiven Einfluss auf die Gesamteinschätzung.
-–	Ähnlich verhält es sich mit der Einschätzung zu dem Bedarf an KI in der Vereinsarbeit, wobei die Befragten den Bedarf durchschnittlich geringer einschätzen (38), als sie KI zwischen Hype und Mehrwert einordnen würden. 
-–	Auch hier gibt es Unterschiede zwischen KI-Nutzenden und solchen, die es nicht tun. Mit einem Durchschnitt von 31.5 sind sich Nicht-Nutzende relativ einig, dass es keinen Bedarf an KI in der Vereinsarbeit gibt. Bei den KI-Nutzenden hingegen gibt es diesbezüglich Uneinigkeit. Hier ist der Durchschnitt ungefähr bei 50. 
-–	Auch hier hat die Nutzung von KI einen statistisch signifikanten positiven Einfluss auf die Einschätzung des Bedarfs.
+* Die Befragten sind gespaltener Meinung, wenn es um die Gesamteinschätzung von KI angeht. Der Durschnitt der Einschätzung nauf einer Skala von 0 bis 100, wobei 0 für „Hype“ und 100 für „Mehrwert“ steht, liegt bei 47. 
+* Untersucht man die Verteilung der Einschätzungen, offenbart sich eine zweigipflige Verteilung. Dies deutet auf eine gewisse Polarisierung hin.
+
+* Die Analyse zeigt weiterhin, dass die Gesamteinschätzung von KI mit deren Nutzung verknüpft ist. Befragte, die KI aktiv nutzen, bewerten diese überwiegend als Mehrwert, während Nicht-Nutzer:innen KI häufiger als Hype wahrnehmen. 
+
+* Die Nutzung von KI hat einen statistisch signifikanten positiven Einfluss auf die Gesamteinschätzung.
+
+* Ähnlich verhält es sich mit der Einschätzung zu dem Bedarf an KI in der Vereinsarbeit, wobei die Befragten den Bedarf durchschnittlich geringer einschätzen (38), als sie KI zwischen Hype und Mehrwert einordnen würden. 
+
+* Auch hier gibt es Unterschiede zwischen KI-Nutzenden und solchen, die es nicht tun. Mit einem Durchschnitt von 31.5 sind sich Nicht-Nutzende relativ einig, dass es keinen Bedarf an KI in der Vereinsarbeit gibt. Bei den KI-Nutzenden hingegen gibt es diesbezüglich Uneinigkeit. Hier ist der Durchschnitt ungefähr bei 50. 
+
+* Auch hier hat die Nutzung von KI einen statistisch signifikanten positiven Einfluss auf die Einschätzung des Bedarfs.
 
 
 ```{r}
 #| label: fig-KI-opinion
 #| warning: false
 #| height: 20
+#| echo: false
 
-overall_mean_q9 <- mean(df$Q9, na.rm = TRUE)
-overall_mean_q17 <- mean(df$Q17, na.rm = TRUE)
+create_density_plot <- function(data, 
+                              x_var,
+                              title,
+                              x_label,
+                              left_label = "",
+                              right_label = "",
+                              group_var = "ki_usage") {
 
-group_means_q9 <- df %>%
-  group_by(ki_usage) %>%
-  summarise(mean_Q9 = mean(Q9, na.rm = TRUE))
+  if (is.logical(data[[group_var]])) {
+    data[[group_var]] <- factor(data[[group_var]], 
+                               levels = c(FALSE, TRUE),
+                               labels = c("Nein", "Ja"))
+  }
+  overall_mean <- mean(data[[x_var]], na.rm = TRUE)
 
-group_means_q17 <- df %>%
-  group_by(ki_usage) %>%
-  summarise(mean_Q17 = mean(Q17, na.rm = TRUE))
+  group_means <- data %>%
+    group_by(!!sym(group_var)) %>%
+    summarise(mean_val = mean(!!sym(x_var), na.rm = TRUE))
 
-cor_test_q9 <- cor.test(df$Q9, as.numeric(df$ki_usage), use = "complete.obs")
-cor_coeff_q9 <- round(cor_test_q9$estimate, 2)
-p_value_q9 <- round(cor_test_q9$p.value, 3)
+  cor_test <- cor.test(data[[x_var]], 
+                       as.numeric(data[[group_var]] == "Ja"), 
+                       use = "complete.obs")
+  cor_coeff <- round(cor_test$estimate, 2)
+  p_value <- round(cor_test$p.value, 4)
 
-cor_test_q17 <- cor.test(df$Q17, as.numeric(df$ki_usage), use = "complete.obs")
-cor_coeff_q17 <- round(cor_test_q17$estimate, 2)
-p_value_q17 <- round(cor_test_q17$p.value, 3)
+  group_labels <- paste0(group_means[[group_var]], " (Ø: ", round(group_means$mean_val, 1), ")")
+  names(group_labels) <- group_means[[group_var]]
 
+  plot <- ggplot(data, aes(x = !!sym(x_var))) + 
+    geom_density(aes(fill = !!sym(group_var)), color = "black", alpha = 0.6) + 
+    scale_fill_manual(values = c(dv_palette("qualitative")[1], 
+                                dv_palette("qualitative")[2]), 
+                      name = "KI Nutzung",
+                      labels = group_labels) +
+    scale_color_manual(values = c(dv_palette("qualitative")[1], 
+                                 dv_palette("qualitative")[2]), 
+                      name = "KI Nutzung",
+                      labels = group_labels) +
+    theme_dv(base_size = 12) +
+    theme(
+      axis.text.y = element_blank(),
+      axis.ticks.y = element_blank(),
+      legend.position = "top"
+    ) +
+    annotate("text", x = 0, y = -0.0005, 
+             label = left_label, color = "black", hjust = 0) +
+    annotate("text", x = 98, y = -0.0005, 
+             label = right_label, color = "black", hjust = 1) +
+    geom_vline(data = group_means, 
+               aes(xintercept = mean_val, color = !!sym(group_var)),
+               linetype = "dashed", linewidth = 1) +
+    geom_vline(xintercept = overall_mean, 
+               linetype = "solid", linewidth = 1) +
+    annotate("text", x = overall_mean, y = 0.015, 
+             label = paste0("Gesamt-Ø:\n  ", round(overall_mean, 1)),
+             size = 4, hjust = -0.2, vjust = 1) +
+    labs(
+      title = title,
+      x = x_label,
+      y = "Dichte",
+      caption = paste0("Korr. ", x_label,  " und KI-Nutzung: ",
+                      "r = ", cor_coeff,
+                      ", p = ", p_value)
+    ) +
+    scale_x_continuous(
+      breaks = seq(0, 100, 10),
+      limits = c(0, 100)
+    )
 
-plot_q9 <- ggplot(df, aes(x = Q9)) + 
-  geom_density(aes(fill = ki_usage), color = "black", alpha = 0.5) + 
-  scale_fill_manual(values = c("black", "#F5C710"), name = "KI Nutzung") +  
-  scale_color_manual(values = c("black", "#F5C710"), name = "KI Nutzung Mittelwert") +  
-  theme_minimal() +  
-  theme(
-    axis.text.y = element_blank(), 
-    axis.ticks.y = element_blank(),
-    legend.position = "top"
-  ) +
-  annotate("text", x = 50, y = 0.02, 
-           label = paste0("Zusammenhang Nutzung × Einschätzung:\n",
-                          "r = ", cor_coeff_q9, "\n", 
-                          "p = ", p_value_q9), 
-           color = "black", size = 5, hjust = 0) +
-  annotate("text", x = 0, y = -0.0005, label = "Hype", color = "black") +
-  annotate("text", x = 98, y = -0.0005, label = "Mehrwert", color = "black") +
-  geom_vline(data = group_means_q9, aes(xintercept = mean_Q9, color = ki_usage), 
-             linetype = "dashed", linewidth = 1, show.legend = TRUE) + 
-  geom_vline(xintercept = overall_mean_q9, color = "blue", linetype = "solid", linewidth = 1) + # Overall mean line
-  geom_text(data = group_means_q9, aes(x = mean_Q9, y = 0.015, 
-           label = paste0("Ø (", ki_usage, "): ", round(mean_Q9, 1))), 
-           size = 4, hjust = -0.1, show.legend = FALSE) + 
-  annotate("text", x = overall_mean_q9, y = 0.015, label = paste0("Gesamt-Ø: ", round(overall_mean_q9, 1)), 
-           color = "blue", size = 4, hjust = -0.2, vjust = 3) + 
-  labs(
-    title = "KI Nutzung vs Gesamteinschätzung (Q9)",
-    x = "Gesamteinschätzung",
-    y = "Dichte"
-  ) +
-  scale_x_continuous(
-    breaks = seq(0, 100, 10),
-    limits = c(0, 100)
-  )
+  return(plot)
+}
 
-plot_q17 <- ggplot(df, aes(x = Q17)) + 
-  geom_density(aes(fill = ki_usage), color = "black", alpha = 0.5) +  
-  scale_fill_manual(values = c("black", "#F5C710"), name = "KI Nutzung") +  
-  scale_color_manual(values = c("black", "#F5C710"), name = "KI Nutzung Mittelwert") +  
-  theme_minimal() +  
-  theme(
-    axis.text.y = element_blank(), 
-    axis.ticks.y = element_blank(),
-    legend.position = "top"
-  ) +
-  annotate("text", x = 50, y = 0.02, 
-           label = paste0("Zusammenhang Nutzung × Einschätzung:\n",
-                          "r = ", cor_coeff_q17, "\n", 
-                          "p = ", p_value_q17), 
-           color = "black", size = 5, hjust = 0) +
-  annotate("text", x = 5, y = -0.0005, label = "Es gibt keinen Bedarf", color = "black", hjust = 0) +
-  annotate("text", x = 95, y = -0.0005, label = "Es gibt Bedarf", color = "black", hjust = 1) +
-  geom_vline(data = group_means_q17, aes(xintercept = mean_Q17, color = ki_usage), 
-             linetype = "dashed", linewidth = 1, show.legend = TRUE) + 
-  geom_vline(xintercept = overall_mean_q17, color = "blue", linetype = "solid", linewidth = 1) + # Overall mean line
-  geom_text(data = group_means_q17, aes(x = mean_Q17, y = 0.015, 
-           label = paste0("Ø (", ki_usage, "): ", round(mean_Q17, 1))), 
-           size = 4, hjust = -0.1, show.legend = FALSE) + 
-  annotate("text", x = overall_mean_q17, y = 0.015, label = paste0("Gesamt-Ø: ", round(overall_mean_q17, 1)), 
-           color = "blue", size = 4, hjust = -0.2, vjust = 3) + 
-  labs(
-    title = "Wie hoch ist der Bedarf an KI in deiner Vereinsarbeit? (Q17)",
-    x = "Bedarf",
-    y = "Dichte"
-  ) +
-  scale_x_continuous(
-    breaks = seq(0, 100, 10),
-    limits = c(0, 100)
-  )
+plot_q9 <- create_density_plot(
+  data = df,
+  x_var = "Q9",
+  title = "Gesamteinschätzung KI",
+  x_label = "Gesamteinschätzung",
+  left_label = "Hype",
+  right_label = "Mehrwert"
+)
 
-grid.arrange(plot_q9, plot_q17, ncol = 1)
+plot_q17 <- create_density_plot(
+  data = df,
+  x_var = "Q17",
+  title = "Bedarf an KI in der Vereinsarbeit",
+  x_label = "Bedarf",
+  left_label = "Es gibt keinen Bedarf",
+  right_label = "Es gibt Bedarf"
+)
+
+grid.arrange(
+  plot_q9, 
+  plot_q17, 
+  ncol = 1
+)
 
 ```
 
 
-```{r}
-anova_result <- aov(Q9 ~ ki_usage, data = df)
-summary(anova_result)
-```
+## Was ermöglicht KI?
 
-```{r}
-anova_result <- aov(Q17 ~ ki_usage, data = df)
-summary(anova_result)
-```
+* Den Nutzen von KI-Anwendungen sehen die Befragten vor allem bei Zeitersparnis, Effizienzsteigerung und Professionalisierung. Diese Möglichkeiten von KI werden außerdem auch oft zusammen als zutreffend eingeschätzt: wenn jemand den Nutzen von KI bei Zeitersparnis sieht, ist es wahrscheinlich, dass auch Effizienzsteigerung oder Professionalisierung als zutreffend bewertet werden.
 
-### Was ermöglicht KI?
-
-–	Den Nutzen von KI-Anwendungen sehen die Befragten vor allem bei Zeitersparnis, Effizienzsteigerung und Professionalisierung. Diese Möglichkeiten von KI werden außerdem auch oft zusammen als zutreffend eingeschätzt: wenn jemand den Nutzen von KI bei Zeitersparnis sieht, ist es wahrscheinlich, dass auch Effizienzsteigerung oder Professionalisierung als zutreffend bewertet werden.
-–	Betrachtet man den wahrgenommenen Nutzen differenziert nach KI-Nutzung zeigen sich, ähnlich wie bei der Gesamteinschätzung, ein Zusammenhang. Wenn Befragte KI nutzen, ist es wahrscheinlicher, dass sie den Nutzen von KI bei Zeitersparnis, Effizienzsteigerung und Professionalisierung als hoch ansehen. Gering weniger wahrscheinlich ist es jedoch, dass sie  Transparenz in der Vereinsarbeit als als Nutzen hoch bewerten.
+* Betrachtet man den wahrgenommenen Nutzen differenziert nach KI-Nutzung zeigen sich, ähnlich wie bei der Gesamteinschätzung, ein Zusammenhang. Wenn Befragte KI nutzen, ist es wahrscheinlicher, dass sie den Nutzen von KI bei Zeitersparnis, Effizienzsteigerung und Professionalisierung als hoch ansehen. Gering weniger wahrscheinlich ist es jedoch, dass sie  Transparenz in der Vereinsarbeit als als Nutzen hoch bewerten.
 
 
 ```{r}
 #| label: fig-KI-benefits
 #| warning: false
-#| height: 20
+#| echo: false
 
-correlations <- df %>%
-  select(matches("^Q8_[0-9]+$")) %>%
-  map_dbl(~ cor(.x, df$ki_usage, use = "pairwise.complete.obs"))
-
-correlations <- set_names(correlations, names(df %>% select(matches("^Q8_[0-9]+$"))))
+knitr::opts_chunk$set(
+  fig.height = 20
+)
 
 df_opps <- df %>% 
   select(matches("^Q8_[0-9]+$"), ki_usage) %>%  
@@ -383,9 +395,6 @@ df_opps <- df %>%
   mutate(mean_value = mean(response, na.rm = TRUE)) %>%  
   ungroup()
 
-df_opps <- df_opps %>%
-  mutate(correlation = correlations[question])
-
 overall_means <- df_opps %>%
   group_by(label) %>%
   summarise(overall_mean = mean(response, na.rm = TRUE)) %>%
@@ -395,46 +404,68 @@ df_opps <- df_opps %>%
   left_join(overall_means, by = "label")
 
 annotations <- df_opps %>%
-  distinct(label, ki_usage, mean_value, correlation, overall_mean)
+  distinct(label, ki_usage, mean_value, overall_mean)
 
 df_opps %>% 
   ggplot(aes(x = response, fill = ki_usage)) +
-  geom_histogram(binwidth = 5, position = "identity", alpha = 0.5) +
-  geom_vline(aes(xintercept = mean_value, color = ki_usage), 
-             linetype = "dashed") +
+  geom_histogram(binwidth = 5, position = "identity", alpha = 0.6) +
   geom_vline(aes(xintercept = overall_mean), 
-             linetype = "dotted", color = "black") + 
-  geom_text(data = annotations,  
-            aes(x = Inf, y = Inf, 
-                label = sprintf("Corr: %.2f", correlation)),
-            vjust = 2, hjust = 1.1, size = 4, color = "black") +
-  geom_text(data = annotations,
-            aes(x = mean_value, y = Inf, 
-                label = sprintf("Ø %s: %.1f", ki_usage, mean_value),
-                color = ki_usage),
-            vjust = 4, hjust = -0.1) +
+             linetype = "dotted") + 
   geom_text(data = annotations,  
             aes(x = overall_mean, y = Inf, 
-                label = sprintf("Ø Overall: %.1f", overall_mean)),
-            vjust = 6, hjust = -0.1, color = "black") +
+                label = sprintf("Ø %.1f", overall_mean)),
+            vjust = 1.5, hjust = -0.1) +
   facet_wrap(~reorder(label, -overall_mean), ncol = 1) +  
   scale_y_continuous(breaks = seq(0, 100, by = 10)) +
-  scale_fill_colorblind(name = "KI Nutzung") +
-  scale_color_colorblind(name = "KI Nutzung") +
+  scale_fill_dv_d(
+    name = "KI Nutzung",  
+    labels = function(x) if(is.logical(x)) ifelse(x, "Ja", "Nein") else x, 
+    guide = guide_legend(
+      override.aes = list(alpha = 0.6),
+      title.position = "top"
+    )
+  ) +
+  scale_colour_dv_d(
+    name = "KI Nutzung", 
+    labels = function(x) if(is.logical(x)) ifelse(x, "Ja", "Nein") else x,  
+    guide = "none"
+  ) +
   labs(
+    title = "Einschätzung der Vorteile von KI differenziert nach Nutzung",
     x = "Einschätzung",
     y = "Häufigkeit"
+ ) +
+  theme_dv(
+    base_size = 16,
+    grid = "XY"
   ) +
   theme(
     strip.text = element_text(angle = 0),
     strip.background = element_blank(),
-    panel.spacing = unit(1, "cm")
-  )
+    panel.spacing = unit(1, "cm"),
+    legend.position = "top",
+    legend.justification = "left"
+  ) 
+
+
+```
+
+Correlation of Q8 with KI usage
+```{r}
+correlations <- df %>%
+  select(matches("^Q8_[0-9]+$")) %>%
+  map_dbl(~ cor(.x, df$ki_usage, use = "pairwise.complete.obs"))
+
+correlations <- set_names(correlations, names(df %>% select(matches("^Q8_[0-9]+$"))))
+
+print(correlations)
 ```
 
 Top Q8 answers are correlated with each other.
 
 ```{r}
+#| warning: false
+#| echo: false
 
 selected_columns <- df %>% select(Q8_1, Q8_2, Q8_3, Q8_4, Q8_6)
 
@@ -457,15 +488,17 @@ print(correlations)
 ```
 
 
-### KI Challenges
+## KI Challenges
 
-–	Bei den Herausforderungen von KI hingegen sind sich Nutzende dieser Technologie und solche, die dies nicht tun, relativ einig. Hier werden mangelndes Know-How und Datenschutzbedenken als am zutreffendsten angegeben. Ebenfalls häufig als herausfordernd bewertet ist die Schwierigkeit, die richtige KI-Anwendung zu finden. Hier ist jedoch interessant, dass es eine größere Menge an Leuten gibt, die dies wiederum nicht als herausfordernd bewerten, was in diesem Punkt für Uneinigkeit spricht.
-–	Ethische Bedenken und Kosten-Nutzen-Relation scheinen die Befragten jedoch klar nicht als herausfordernd zu empfinden. 
+* Bei den Herausforderungen von KI hingegen sind sich Nutzende dieser Technologie und solche, die dies nicht tun, relativ einig. Hier werden mangelndes Know-How und Datenschutzbedenken als am zutreffendsten angegeben. Ebenfalls häufig als herausfordernd bewertet ist die Schwierigkeit, die richtige KI-Anwendung zu finden. Hier ist jedoch interessant, dass es eine größere Menge an Leuten gibt, die dies wiederum nicht als herausfordernd bewerten, was in diesem Punkt für Uneinigkeit spricht.
+
+* Ethische Bedenken und Kosten-Nutzen-Relation scheinen die Befragten jedoch klar nicht als herausfordernd zu empfinden. 
 
 ```{r}
 #| warning: false
-#| label: fig-Q5
+#| label: fig-KI-challenges
 #| height: 20
+#| echo: false
 
 df_long <- df %>%
   select(starts_with("Q5"), -Q5_open, -Q5_9) %>% 
@@ -483,47 +516,64 @@ df_long %>%
   group_by(label, rank) %>%
   mutate(count = n(),
          pct = (count/total_responses) * 100) %>%
+  # Calculate max count for each facet
+  group_by(label) %>%
+  mutate(max_count = max(count)) %>%
   ggplot(aes(x = rank)) + 
-  geom_bar(fill = dv_blue) +
-  # Add mean line with name for legend
-  geom_vline(aes(xintercept = mean_rank, linetype = "Mean"), 
-             color = "blue") +
-  # Define linetypes in scale to create legend
-  scale_linetype_manual(name = NULL,
-                       values = c("Mean" = "dashed")) +
-  geom_label(aes(label = sprintf("μ = %.2f\nσ = %.2f", mean_rank, sd_rank),
-                 x = max(rank), 
-                 y = max(count)),
-             hjust = 1,
-             vjust = 1,
-             fill = "white",
-             label.size = 0.5,
-             alpha = 0.8) +
-  geom_text(stat = "count", 
-            aes(label = sprintf("%d\n(%.1f%%)", 
-                              after_stat(count), 
-                              after_stat(count)/total_responses * 100)),
-            vjust = -0.5) +
+  geom_bar(
+    fill = dv_palette("qualitative")[1],
+    alpha = 0.6
+  ) + 
+  geom_vline(aes(xintercept = mean_rank), 
+             linetype = "dotted") +
+  # Use max_count for y-position scaling
+  geom_text(
+    data = . %>% group_by(label) %>% slice(1),
+    aes(x = mean_rank, 
+        y = max_count * 0.8,
+        label = sprintf("Ø %.1f", mean_rank)),
+    vjust = -1, hjust=-0.3
+  ) +
   facet_wrap(~forcats::fct_reorder(label, mean_rank), ncol = 1) +
-  scale_x_continuous(breaks = seq(min(df_long$rank), max(df_long$rank), 1),
-                    trans = "reverse") +
-  labs(x = "Ranking", y = "Count", 
-       title = str_wrap("Größte Herausforderungen für aktive Nutzung: Datenschutz und Know-How", width = 60)) +
-  theme_minimal() +
-  theme(panel.grid.minor = element_blank())
+  scale_x_continuous(
+    breaks = seq(min(df_long$rank), max(df_long$rank), 1),
+    trans = "reverse"
+  ) +
+  scale_y_continuous() +
+  labs(
+    title = "Ranking der Herausforderungen für aktive KI-Nutzung",
+    x = "Ranking",
+    y = "Häufigkeit"
+  ) +
+  theme_dv(
+    base_size = 16,
+    grid = "XY"
+  ) +
+  theme(
+    strip.text = element_text(angle = 0),
+    panel.spacing = unit(1, "cm"),
+    legend.position = "none"
+  )
+
+
 
 ```
 
 
-#### Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?
+## Wenn du einem Entwickler von KI etwas mit auf den Weg geben könntest, was wäre es? Was denkst du, sollte man bei der Entwicklung von KI-Anwendungen besonders berücksichtigen?
 
-–	In den Antworten auf die Frage, was man Entwickler:innen auf den Weg geben würde, lassen sich drei Themen identifizieren.
-–	Zum einen, entgegen der Einschätzung zu den Herausforderungen bei KI, wünschen sich die Befragten verantwortungsbewusste Entwicklung, vor allem im Hinblick auf die Rolle des Menschen, welcher im Mittelpunkt stehen sollte und wessen Recht bewahrt werden sollten.
-–	Anknüpfend daran betrifft der zweite Schwerpunkt Transparenz und Datenschutz: den Befragten war wichtig, dass mit KI getroffene Entscheidungen und die Verarbeitung von Daten transparent gestaltet sind. 
-–	Wiederum übereinstimmend mit der Einschätzung zu errausforderungen bei der Nutzung von KI  gibt es einen Wunsch nach Benutzerfreundlichkeit, mit einem besonderen Fokus auf die Zugänglichkeit für ältere Menschen und Nicht-Expert:innen. 
+* In den Antworten auf die Frage, was man Entwickler:innen auf den Weg geben würde, lassen sich drei Themen identifizieren.
+
+* Zum einen, entgegen der Einschätzung zu den Herausforderungen bei KI, wünschen sich die Befragten verantwortungsbewusste Entwicklung, vor allem im Hinblick auf die Rolle des Menschen, welcher im Mittelpunkt stehen sollte und wessen Recht bewahrt werden sollten.
+
+* Anknüpfend daran betrifft der zweite Schwerpunkt Transparenz und Datenschutz: den Befragten war wichtig, dass mit KI getroffene Entscheidungen und die Verarbeitung von Daten transparent gestaltet sind. 
+
+* Wiederum übereinstimmend mit der Einschätzung zu errausforderungen bei der Nutzung von KI  gibt es einen Wunsch nach Benutzerfreundlichkeit, mit einem besonderen Fokus auf die Zugänglichkeit für ältere Menschen und Nicht-Expert:innen. 
 
 
 ```{r}
+#| warning: false
+#| echo: false
 
 q15 <- readr::read_delim("data/open_Q15.csv")
 
@@ -533,61 +583,3 @@ q15 %>%
   knitr::kable(col.names = c("Name", "Beschreibung", "Anzahl"))
 ```
 
-#### Misc
-
-
-Es gibt eine negative Korrelation zwischen den Werten Transparenz und Autonomie. Wenn Befragte einen dieser Werte als hochrangig einstufen, tendieren sie dazu dem anderen einen niedrigeren Rand zuzuordnen. Dies könnte von der KI-Kompetenz abhängen: Sog. AI-Doomerism, also die Erzählung, dass selbständige KI eine Gefahr für die Welt darstellt, ist weit entfernt von der Realität, da LLMs keinerlei Agenda besitzen. Menschen, die sich mit KI auskennen, könnten diese Werte besser voneinadner trennen. Dies wird bestätgit durch einen geringen Unterschied in der negativen Korrelation der Werte Transparenz und Autonomie, wenn man diese seperat für KI-Nutzende und solche, die dies nicht tun, betrachtet. Dieser Unterschied ist jedoch nicht statistisch signifikant.
-
-
-```{r}
-calculate_correlation <- function(data, var1, var2) {
-  test <- cor.test(data[[var1]], data[[var2]], method = "spearman", exact = FALSE)
-  tibble(
-    Var1 = var1,
-    Var2 = var2,
-    correlation = test$estimate,
-    p_value = test$p.value
-  )
-}
-
-columns <- colnames(q12_columns)
-
-pairs <- expand.grid(columns, columns, stringsAsFactors = FALSE) %>%
-  filter(Var1 != Var2) %>% 
-  distinct(apply(., 1, function(x) paste(sort(x), collapse = "-")), .keep_all = TRUE)
-
-results <- pairs %>%
-  rowwise() %>%
-  do(calculate_correlation(q12_columns, .$Var1, .$Var2)) %>%
-  ungroup()
-
-threshold <- 0.3
-filtered_results <- results %>%
-  filter(abs(correlation) > threshold)
-
-print(filtered_results)
-```
-
-```{r}
-group_0 <- df %>% filter(ki_usage == 0)
-group_1 <- df %>% filter(ki_usage == 1)
-
-cor_group_0 <- cor(group_0$Q12_5, group_0$Q12_1, use = "pairwise.complete.obs",  method = "spearman")
-cor_group_1 <- cor(group_1$Q12_5, group_1$Q12_1, use = "pairwise.complete.obs",  method = "spearman")
-
-cat( cor_group_0, "\n")
-cat(cor_group_1, "\n")
-```
-
-```{r}
-library(psych)
-
-r1 <- cor_group_0  
-r2 <- cor_group_1  
-n1 <- nrow(group_0)  
-n2 <- nrow(group_1)  
-
-test_result <- r.test(n = min(n1, n2), r12 = r1, r34 = r2)
-
-print(test_result)
-```

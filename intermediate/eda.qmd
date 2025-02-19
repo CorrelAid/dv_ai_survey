@@ -832,3 +832,61 @@ summary(anova_result)
 
 
 
+#### Misc
+
+
+Es gibt eine negative Korrelation zwischen den Werten Transparenz und Autonomie. Wenn Befragte einen dieser Werte als hochrangig einstufen, tendieren sie dazu dem anderen einen niedrigeren Rand zuzuordnen. Dies könnte von der KI-Kompetenz abhängen: Sog. AI-Doomerism, also die Erzählung, dass selbständige KI eine Gefahr für die Welt darstellt, ist weit entfernt von der Realität, da LLMs keinerlei Agenda besitzen. Menschen, die sich mit KI auskennen, könnten diese Werte besser voneinadner trennen. Dies wird bestätgit durch einen geringen Unterschied in der negativen Korrelation der Werte Transparenz und Autonomie, wenn man diese seperat für KI-Nutzende und solche, die dies nicht tun, betrachtet. Dieser Unterschied ist jedoch nicht statistisch signifikant.
+
+
+```{r}
+calculate_correlation <- function(data, var1, var2) {
+  test <- cor.test(data[[var1]], data[[var2]], method = "spearman", exact = FALSE)
+  tibble(
+    Var1 = var1,
+    Var2 = var2,
+    correlation = test$estimate,
+    p_value = test$p.value
+  )
+}
+
+columns <- colnames(q12_columns)
+
+pairs <- expand.grid(columns, columns, stringsAsFactors = FALSE) %>%
+  filter(Var1 != Var2) %>% 
+  distinct(apply(., 1, function(x) paste(sort(x), collapse = "-")), .keep_all = TRUE)
+
+results <- pairs %>%
+  rowwise() %>%
+  do(calculate_correlation(q12_columns, .$Var1, .$Var2)) %>%
+  ungroup()
+
+threshold <- 0.3
+filtered_results <- results %>%
+  filter(abs(correlation) > threshold)
+
+print(filtered_results)
+```
+
+```{r}
+group_0 <- df %>% filter(ki_usage == 0)
+group_1 <- df %>% filter(ki_usage == 1)
+
+cor_group_0 <- cor(group_0$Q12_5, group_0$Q12_1, use = "pairwise.complete.obs",  method = "spearman")
+cor_group_1 <- cor(group_1$Q12_5, group_1$Q12_1, use = "pairwise.complete.obs",  method = "spearman")
+
+cat( cor_group_0, "\n")
+cat(cor_group_1, "\n")
+```
+
+```{r}
+library(psych)
+
+r1 <- cor_group_0  
+r2 <- cor_group_1  
+n1 <- nrow(group_0)  
+n2 <- nrow(group_1)  
+
+test_result <- r.test(n = min(n1, n2), r12 = r1, r34 = r2)
+
+print(test_result)
+```

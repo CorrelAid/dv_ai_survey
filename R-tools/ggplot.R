@@ -20,10 +20,9 @@ theme_dv <- function(base_size = 16,
 
     dark_grey <- "#242424"
     mid_grey <- "#616161"
-    # light_grey <- "#f2f2f2"
+    light_green <- "#edf6d9"
     blue <- "#004fa3"
     green <- "#598000"
-    light_green <- "#edf6d9"
 
     t <- ggplot2::theme_minimal(
         base_size = base_size,
@@ -40,7 +39,7 @@ theme_dv <- function(base_size = 16,
                 face = "bold",
                 colour = blue,
                 size = ggplot2::rel(1.25),
-                margin = ggplot2::margin(b = base_size * 2 / 3),
+                margin = ggplot2::margin(b = base_size * 2 / 3)
             ),
             plot.subtitle = ggplot2::element_text(
                 face = "bold",
@@ -53,6 +52,7 @@ theme_dv <- function(base_size = 16,
                 hjust = 0,
                 margin = ggplot2::margin(t = base_size * 2 / 3)
             ),
+            axis.text = ggplot2::element_text(family = axis_family),
             axis.title = ggplot2::element_text(
                 face = "bold",
                 colour = mid_grey
@@ -61,22 +61,9 @@ theme_dv <- function(base_size = 16,
                 hjust = 1,
                 margin = ggplot2::margin(t = base_size * 2 / 3)
             ),
-            axis.title.x.top = ggplot2::element_text(
-                margin = ggplot2::margin(b = base_size * 2 / 3)
-            ),
             axis.title.y = ggplot2::element_text(
                 hjust = 1,
                 margin = ggplot2::margin(r = base_size * 2 / 3)
-            ),
-            axis.title.y.right = ggplot2::element_text(
-                margin = ggplot2::margin(l = base_size * 2 / 3)
-            ),
-            axis.text = ggplot2::element_text(family = axis_family),
-            axis.text.x = ggplot2::element_text(
-                margin = ggplot2::margin(t = base_size / 3)
-            ),
-            axis.text.y = ggplot2::element_text(
-                margin = ggplot2::margin(r = base_size / 2)
             ),
             legend.key.spacing = grid::unit(base_size * 2 / 3, "pt"),
             legend.key.size = grid::unit(base_size * 1.05, "pt"),
@@ -87,9 +74,12 @@ theme_dv <- function(base_size = 16,
             legend.position = "top",
             legend.justification = "left",
             strip.background = ggplot2::element_blank(),
-            strip.text = ggplot2::element_text(size = ggplot2::rel(1.05)),
+            strip.text = ggplot2::element_text(
+                face = "bold",
+                colour = mid_grey,
+                size = ggplot2::rel(1.05)
+            ),
             panel.grid = ggplot2::element_line(colour = light_green),
-            panel.grid.minor = ggplot2::element_line(linewidth = ggplot2::rel(1)),
             plot.margin = ggplot2::margin(
                 base_rect_size * 40,
                 base_rect_size * 40,
@@ -98,9 +88,18 @@ theme_dv <- function(base_size = 16,
             ),
             plot.title.position = "plot",
             plot.caption.position = "plot",
-            plot.tag = element_text(
+            plot.tag = ggplot2::element_text(
                 size = ggplot2::rel(1),
                 margin = ggplot2::margin(r = base_size / 2, b = base_size / 2)
+            ),
+            vline = ggplot2::element_line(
+                color = mid_grey,
+                linewidth = base_line_size
+            ),
+            plot.annotation = ggplot2::element_text(
+                family = base_family,
+                face = "bold",
+                color = mid_grey
             )
         )
 
@@ -119,6 +118,7 @@ theme_dv <- function(base_size = 16,
 
     t
 }
+
 
 # Scales ------------------------------------------------------------------
 
