@@ -7,7 +7,7 @@ format:
     wrap: none
     default-image-extension: png
     toc: false
-    embed-resources: true
+    # embed-resources: true
 title: 'Analyse der Umfrage: Nutzen von KI im Ehrenamt'
 author: CorrelAid e.V.
 date: 2024-12-12
