@@ -12,6 +12,6 @@ What is the current state of the use of artificial intelligence in associations 
 
 ## Setup
 
-This repository is utilizing [quarto](https://quarto.org/docs/get-started/) in conjunction with [renv](https://quarto.org/docs/projects/virtual-environments.html#using-renv). Having quarto and renv installed run `renv::restore()` to install required packages.
-
+- This repository is utilizing [quarto](https://quarto.org/docs/get-started/) in conjunction with [renv](https://quarto.org/docs/projects/virtual-environments.html#using-renv). Having quarto and renv installed run `renv::restore()` to install required packages.
+- This repository is additionally utilizing [uv](https://docs.astral.sh/uv/). Having uv installed, run `uv sync` to install dependencies.
 
