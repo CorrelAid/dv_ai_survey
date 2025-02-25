@@ -1,8 +1,8 @@
 # Evaluation of a survey on AI in associations from Digital Vereint
 
-What is the current state of the use of artificial intelligence in associations in Germany? “[Digital Vereint](https://digital-vereint.de/)”, a project of lagfa bayern e.V., investigated this question in a recent survey of around 220 Bavarian associations. Digital Vereint helps volunteers and associations to take advantage of the opportunities offered by digitalization. In collaboration with the [Civic Data Lab](https://civic-data.de) team, the results of the survey were evaluated and visualized in detail as part of a data project. The project not only provides an insight into the current status of AI use in associations, but also offers valuable insights into what organizations should pay attention to when conducting their own surveys. 
+What is the current state of the use of artificial intelligence in associations in Germany? [Digital Vereint](https://digital-vereint.de/) investigated this question in a recent survey of around 220 Bavarian associations. In collaboration with the [Civic Data Lab](https://civic-data.de) team, the results of the survey were evaluated and visualized. The project not only provides an insight into the current status of AI use in associations, but also offers valuable insights into what organizations should pay attention to when conducting their own surveys. 
 
-🔎 Find the final report in `report.qmd`.
+🔎 Find the final report in `report.qmd` and the plots in `report_files/figure-html`
 
 ## Data Processing
 
