@@ -1,4 +1,4 @@
-# Evaluation of a survey on AI in associations from Digital Vereint
+# AI Usage in Associations
 
 What is the current state of the use of artificial intelligence in associations in Germany? [Digital Vereint](https://digital-vereint.de/) investigated this question in a recent survey of around 220 Bavarian associations. In collaboration with the [Civic Data Lab](https://civic-data.de) team, the results of the survey were evaluated and visualized. The project not only provides an insight into the current status of AI use in associations, but also offers valuable insights into what organizations should pay attention to when conducting their own surveys. 
 
