@@ -15,8 +15,8 @@ theme_dv <- function(base_size = 16,
         stop('`grid` must be a string: "none" or any combination of "X", "Y", "x", and "y"')
     }
 
-    font_fallback(base_family)
-    font_fallback(axis_family)
+    base_family <- font_fallback(base_family)
+    axis_family <- font_fallback(axis_family)
 
     dark_grey <- "#242424"
     mid_grey <- "#616161"
@@ -152,18 +152,18 @@ scale_fill_dv_c <- function(reverse = FALSE,
     )
 }
 
-scale_colour_dv_d <- function(...) {
+scale_colour_dv_d <- function(reverse = FALSE, ...) {
     ggplot2::discrete_scale(
         aesthetics = "colour",
-        palette = scales::manual_pal(dv_palette("qualitative")),
+        palette = scales::manual_pal(dv_palette("qualitative", reverse)),
         ...
     )
 }
 
-scale_fill_dv_d <- function(...) {
+scale_fill_dv_d <- function(reverse = FALSE, ...) {
     ggplot2::discrete_scale(
         aesthetics = "fill",
-        palette = scales::manual_pal(dv_palette("qualitative")),
+        palette = scales::manual_pal(dv_palette("qualitative", reverse)),
         ...
     )
 }
@@ -190,7 +190,14 @@ dv_palette <- function(option = c("sequential", "qualitative"),
         qualitative = c("#004fa3", "#598000", "#7fa7d1", "#adbf7f")
     )
 
-    if (reverse) rev(cols) else cols
+    if (reverse) {
+        switch(option,
+            sequential = rev(cols),
+            qualitative = cols[c(2, 1, 4, 3)]
+        )
+    } else {
+        cols
+    }
 }
 
 ## Others -----------------------------------------------------------------
