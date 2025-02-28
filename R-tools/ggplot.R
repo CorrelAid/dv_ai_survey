@@ -5,14 +5,18 @@
 #' @param axis_family axis font family
 #' @param grid panel grid to be shown ("none" or a combination of "X", "Y", "x", and "y")
 #'
-theme_dv <- function(base_size = 16,
-                     base_family = "Fira Sans",
-                     axis_family = "Fira Mono",
-                     base_line_size = 0.75,
-                     base_rect_size = 0.75,
-                     grid = "XY") {
+theme_dv <- function(
+    base_size = 16,
+    base_family = "Fira Sans",
+    axis_family = "Fira Mono",
+    base_line_size = 0.75,
+    base_rect_size = 0.75,
+    grid = "XY"
+) {
     if (length(grid) != 1L || !grepl("^(none|[XYxy]+)$", grid)) {
-        stop('`grid` must be a string: "none" or any combination of "X", "Y", "x", and "y"')
+        stop(
+            '`grid` must be a string: "none" or any combination of "X", "Y", "x", and "y"'
+        )
     }
 
     base_family <- font_fallback(base_family)
@@ -80,6 +84,9 @@ theme_dv <- function(base_size = 16,
                 size = ggplot2::rel(1.05)
             ),
             panel.grid = ggplot2::element_line(colour = light_green),
+            panel.grid.minor = ggplot2::element_line(
+                linewidth = ggplot2::rel(1)
+            ),
             plot.margin = ggplot2::margin(
                 base_rect_size * 40,
                 base_rect_size * 40,
@@ -91,15 +98,6 @@ theme_dv <- function(base_size = 16,
             plot.tag = ggplot2::element_text(
                 size = ggplot2::rel(1),
                 margin = ggplot2::margin(r = base_size / 2, b = base_size / 2)
-            ),
-            vline = ggplot2::element_line(
-                color = mid_grey,
-                linewidth = base_line_size
-            ),
-            plot.annotation = ggplot2::element_text(
-                family = base_family,
-                face = "bold",
-                color = mid_grey
             )
         )
 
@@ -130,9 +128,7 @@ theme_dv <- function(base_size = 16,
 #' @inheritParams `ggplot2::continuous_scale`
 #' @inheritDotParams `ggplot2::continuous_scale`
 #'
-scale_colour_dv_c <- function(reverse = FALSE,
-                              guide = "colourbar",
-                              ...) {
+scale_colour_dv_c <- function(reverse = FALSE, guide = "colourbar", ...) {
     ggplot2::continuous_scale(
         aesthetics = "colour",
         palette = scales::gradient_n_pal(dv_palette("sequential", reverse)),
@@ -141,9 +137,7 @@ scale_colour_dv_c <- function(reverse = FALSE,
     )
 }
 
-scale_fill_dv_c <- function(reverse = FALSE,
-                            guide = "colourbar",
-                            ...) {
+scale_fill_dv_c <- function(reverse = FALSE, guide = "colourbar", ...) {
     ggplot2::continuous_scale(
         aesthetics = "fill",
         palette = scales::gradient_n_pal(dv_palette("sequential", reverse)),
@@ -168,11 +162,14 @@ scale_fill_dv_d <- function(reverse = FALSE, ...) {
     )
 }
 
-dv_palette <- function(option = c("sequential", "qualitative"),
-                       reverse = FALSE) {
+dv_palette <- function(
+    option = c("sequential", "qualitative"),
+    reverse = FALSE
+) {
     option <- match.arg(option)
 
-    cols <- switch(option,
+    cols <- switch(
+        option,
         # Darkest blue and lightest green from DV website, but blue darkened and
         # and green lightened by 10%, then interpolated in HSV space
         sequential = c(
@@ -191,7 +188,8 @@ dv_palette <- function(option = c("sequential", "qualitative"),
     )
 
     if (reverse) {
-        switch(option,
+        switch(
+            option,
             sequential = rev(cols),
             qualitative = cols[c(2, 1, 4, 3)]
         )
@@ -218,13 +216,17 @@ label_number_trimmed <- function(decimal.mark = ".", ...) {
         stringi::stri_replace_first_regex(
             x,
             paste0(
-                r"{^([\d,]+)$|^([\d,]+)\}", decimal.mark, r"{0*$|^([\d,]+\}",
-                decimal.mark, r"{[0-9]*?)0*$}"
+                r"{^([\d,]+)$|^([\d,]+)\}",
+                decimal.mark,
+                r"{0*$|^([\d,]+\}",
+                decimal.mark,
+                r"{[0-9]*?)0*$}"
             ),
             "$1$2$3"
         )
     }
 }
+
 
 # Utils -------------------------------------------------------------------
 
@@ -233,8 +235,12 @@ font_fallback <- function(family, fallback = "") {
         fallback <- font_match(fallback)
 
         message(
-            "Font ", family, " is not installed.\n",
-            "Falling back to default font (", fallback, ").\n"
+            "Font ",
+            family,
+            " is not installed.\n",
+            "Falling back to default font (",
+            fallback,
+            ").\n"
         )
 
         return(fallback)
