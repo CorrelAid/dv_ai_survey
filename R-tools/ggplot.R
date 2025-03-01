@@ -146,18 +146,38 @@ scale_fill_dv_c <- function(reverse = FALSE, guide = "colourbar", ...) {
     )
 }
 
-scale_colour_dv_d <- function(reverse = FALSE, ...) {
+scale_colour_dv_d <- function(reverse = FALSE, palette = "qualitative", ...) {
+    pal <- switch(
+        palette,
+        qualitative = scales::manual_pal(dv_palette("qualitative", reverse)),
+        sequential = grDevices::colorRampPalette(
+            dv_palette("sequential", reverse),
+            space = "Lab",
+            interpolate = "spline"
+        )
+    )
+
     ggplot2::discrete_scale(
         aesthetics = "colour",
-        palette = scales::manual_pal(dv_palette("qualitative", reverse)),
+        palette = pal,
         ...
     )
 }
 
-scale_fill_dv_d <- function(reverse = FALSE, ...) {
+scale_fill_dv_d <- function(reverse = FALSE, palette = "qualitative", ...) {
+    pal <- switch(
+        palette,
+        qualitative = scales::manual_pal(dv_palette("qualitative", reverse)),
+        sequential = grDevices::colorRampPalette(
+            dv_palette("sequential", reverse),
+            space = "Lab",
+            interpolate = "spline"
+        )
+    )
+
     ggplot2::discrete_scale(
         aesthetics = "fill",
-        palette = scales::manual_pal(dv_palette("qualitative", reverse)),
+        palette = pal,
         ...
     )
 }
