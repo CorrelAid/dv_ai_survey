@@ -22,7 +22,8 @@ lang: de
 #| echo: false
 knitr::opts_chunk$set(
   fig.width = 10,
-  fig.height = 15
+  fig.height = 15,
+  dev = "ragg_png"
 )
 
 library(tidyverse)
@@ -59,7 +60,7 @@ Anzahl der Befragten: `r nrow(df)`
 #| echo: false
 #| label: fig-KI-usage
 #| fig-width: 10
-#| fig-height: 8
+#| fig-height: 9
 
 usage <- df %>%
   select(starts_with("Q4"), starts_with("Q16"), -Q4_open) %>%
@@ -89,8 +90,17 @@ usage_sums <- df %>%
   scales::label_percent(0.1)()
 
 usage_plot_title <- marquee::marquee_glue(
-  "{.#588001 **Aktuelle** ({usage_sums[['current']]})} vs. **gewünschte KI-Nutzung** ({usage_sums[['desired']]})"
+  "{.#588001 **Aktuelle** ({usage_sums[['current']]})} und **gewünschte KI-Nutzung** ({usage_sums[['desired']]})"
 )
+
+usage_plot_caption <-
+  "Mehrfachauswahl möglich. Nur Werte >1% dargestellt.
+
+Wortlaut der Fragen:
+
+> {.#588001 In den folgenden Bereichen nutze ich KI-Anwendungen für meine Vereinsarbeit aktiv:}
+>
+> {.#004fa3 Worin soll dich KI unterstützen?}"
 
 usage %>%
   filter(prop > 0.01) %>%
@@ -105,7 +115,7 @@ usage %>%
     item = fct_reorder(item, prop_plot, max)
   ) %>%
   ggplot(aes(x = prop_plot, y = item)) +
-  geom_col(aes(fill = battery), width = 0.65) +
+  geom_col(aes(fill = battery, alpha = item == "Sonstiges"), width = 0.65) +
   geom_text(
     aes(
       x = prop_plot + sign(prop_plot) * 0.14,
@@ -114,8 +124,9 @@ usage %>%
     ),
     family = "Fira Mono",
   ) +
-  scale_fill_dv_d(reverse = TRUE) +
   scale_colour_dv_d(reverse = TRUE) +
+  scale_fill_dv_d(reverse = TRUE) +
+  scale_alpha_manual(values = c(1, 0.5)) +
   scale_x_continuous(breaks = 0, limits = c(-0.42, NA)) +
   scale_y_discrete(
     minor_breaks = scales::breaks_width(1, 0.5),
@@ -126,13 +137,14 @@ usage %>%
     x = NULL,
     y = NULL,
     title = usage_plot_title,
-    caption = "Mehrfachauswahl möglich. Nur Werte >1% dargestellt."
+    caption = usage_plot_caption
   ) +
   theme_dv(grid = "Xy") +
   theme(
     axis.text.x = element_blank(),
     legend.position = "off",
-    plot.title = marquee::element_marquee()
+    plot.title = marquee::element_marquee(),
+    plot.caption = marquee::element_marquee()
   )
 ```
 
@@ -143,19 +155,18 @@ usage %>%
 df %>%
   select(starts_with("Q10_") & !matches("open$")) %>%
   summarise(across(everything(), sum)) %>%
-  pivot_longer(everything(), 
-              names_to = "option",
-              values_to = "count") %>%
+  pivot_longer(everything(), names_to = "option", values_to = "count") %>%
   left_join(Q10_Options_map, by = c("option" = "question")) %>%
   mutate(
-    total_percent = count/nrow(df) * 100,
-    active_users_percent = count/nrow(df %>% filter(ki_usage == TRUE)) * 100,
+    total_percent = count / nrow(df) * 100,
+    active_users_percent = count / nrow(df %>% filter(ki_usage == TRUE)) * 100,
     label = str_wrap(label, width = 30)
   ) %>%
   filter(total_percent > 5) %>%
   select(label, count, total_percent, active_users_percent) %>%
   arrange(desc(count)) %>%
   mutate(
+    label = str_replace(label, "\n", " "),
     total_percent = sprintf("%.1f%%", total_percent),
     active_users_percent = sprintf("%.1f%%", active_users_percent)
   ) %>%
@@ -164,7 +175,8 @@ df %>%
     "Anzahl" = count,
     "% aller Befragten" = total_percent,
     "% der KI-Nutzer" = active_users_percent
-  )
+  ) %>%
+  knitr::kable(align = "lrrr")
 ```
 
 ```{r}
@@ -175,10 +187,13 @@ q11 <- readr::read_delim("data/open_Q11.csv")
 
 filtered_summaries <- q11 %>%
   filter(count > 4) %>%
-  arrange(desc(count)) %>% 
-  select(extracted_app, summary, count) 
+  arrange(desc(count)) %>%
+  select(extracted_app, summary, count)
 
-knitr::kable(filtered_summaries, col.names = c("App", "Zusammenfassung", "Anzahl"))
+knitr::kable(
+  filtered_summaries,
+  col.names = c("App", "Zusammenfassung", "Anzahl")
+)
 ```
 
 
