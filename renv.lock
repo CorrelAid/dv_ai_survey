@@ -727,9 +727,14 @@
     },
     "ggplot2": {
       "Package": "ggplot2",
-      "Version": "3.5.1",
-      "Source": "Repository",
-      "Repository": "CRAN",
+      "Version": "3.5.1.9000",
+      "Source": "GitHub",
+      "RemoteType": "github",
+      "RemoteHost": "api.github.com",
+      "RemoteUsername": "tidyverse",
+      "RemoteRepo": "ggplot2",
+      "RemoteRef": "main",
+      "RemoteSha": "3d48ba5c1e58b9d0ddd16cc2aaac3f39b4ee41e9",
       "Requirements": [
         "MASS",
         "R",
@@ -748,7 +753,7 @@
         "vctrs",
         "withr"
       ],
-      "Hash": "44c6a2f8202d5b7e878ea274b1092426"
+      "Hash": "22d929607720b8342fe0cb9ab1ad38d3"
     },
     "ggrepel": {
       "Package": "ggrepel",
@@ -1034,6 +1039,16 @@
       ],
       "Hash": "8954069286b4b2b0d023d1b288dce978"
     },
+    "jpeg": {
+      "Package": "jpeg",
+      "Version": "0.1-10",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "031a0b683d001a7519202f0628fc0358"
+    },
     "jquerylib": {
       "Package": "jquerylib",
       "Version": "0.1.4",
@@ -1131,6 +1146,27 @@
         "R"
       ],
       "Hash": "7ce2733a9826b3aeb1775d56fd305472"
+    },
+    "marquee": {
+      "Package": "marquee",
+      "Version": "1.0.0",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "cli",
+        "cpp11",
+        "glue",
+        "grDevices",
+        "grid",
+        "jpeg",
+        "png",
+        "rlang",
+        "systemfonts",
+        "textshaping",
+        "utils",
+        "vctrs"
+      ],
+      "Hash": "848d6606a6ce591351fe21c034b7457d"
     },
     "memoise": {
       "Package": "memoise",
@@ -1299,6 +1335,16 @@
         "Rcpp"
       ],
       "Hash": "6b8177fd19982f0020743fadbfdbd933"
+    },
+    "png": {
+      "Package": "png",
+      "Version": "0.1-8",
+      "Source": "Repository",
+      "Repository": "CRAN",
+      "Requirements": [
+        "R"
+      ],
+      "Hash": "bd54ba8a0a5faded999a7aab6e46b374"
     },
     "prettyunits": {
       "Package": "prettyunits",
