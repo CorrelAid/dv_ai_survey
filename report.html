@@ -145,46 +145,46 @@ Abbildung&nbsp;1
 <tr class="header">
 <th style="text-align: left;">Anwendung</th>
 <th style="text-align: right;">Anzahl</th>
-<th style="text-align: left;">% aller Befragten</th>
-<th style="text-align: left;">% der KI-Nutzer</th>
+<th style="text-align: right;">% aller Befragten</th>
+<th style="text-align: right;">% der KI-Nutzer</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">ChatGPT (kostenlose Version)</td>
 <td style="text-align: right;">62</td>
-<td style="text-align: left;">28.7%</td>
-<td style="text-align: left;">91.2%</td>
+<td style="text-align: right;">28.7%</td>
+<td style="text-align: right;">91.2%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">KI-Bildgeneratoren (z.B.: Midjourney, Canva)</td>
 <td style="text-align: right;">28</td>
-<td style="text-align: left;">13.0%</td>
-<td style="text-align: left;">41.2%</td>
+<td style="text-align: right;">13.0%</td>
+<td style="text-align: right;">41.2%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Microsoft Copilot</td>
 <td style="text-align: right;">20</td>
-<td style="text-align: left;">9.3%</td>
-<td style="text-align: left;">29.4%</td>
+<td style="text-align: right;">9.3%</td>
+<td style="text-align: right;">29.4%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">KI basierte Übersetzungstools (z.B.: DeepL)</td>
 <td style="text-align: right;">19</td>
-<td style="text-align: left;">8.8%</td>
-<td style="text-align: left;">27.9%</td>
+<td style="text-align: right;">8.8%</td>
+<td style="text-align: right;">27.9%</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Gemini (Google)</td>
 <td style="text-align: right;">14</td>
-<td style="text-align: left;">6.5%</td>
-<td style="text-align: left;">20.6%</td>
+<td style="text-align: right;">6.5%</td>
+<td style="text-align: right;">20.6%</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Sprachassistenten (z.B.: Alexa)</td>
 <td style="text-align: right;">11</td>
-<td style="text-align: left;">5.1%</td>
-<td style="text-align: left;">16.2%</td>
+<td style="text-align: right;">5.1%</td>
+<td style="text-align: right;">16.2%</td>
 </tr>
 </tbody>
 </table>
@@ -237,7 +237,7 @@ Abbildung&nbsp;1
 <li><p>Auch hier gibt es Unterschiede zwischen KI-Nutzenden und solchen, die es nicht tun. Mit einem Durchschnitt von 31.5 sind sich Nicht-Nutzende relativ einig, dass es keinen Bedarf an KI in der Vereinsarbeit gibt. Bei den KI-Nutzenden hingegen gibt es diesbezüglich Uneinigkeit. Hier ist der Durchschnitt ungefähr bei 50.</p></li>
 <li><p>Auch hier hat die Nutzung von KI einen statistisch signifikanten positiven Einfluss auf die Einschätzung des Bedarfs.</p></li>
 </ul>
-<div class="cell" height="20">
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-KI-opinion" class="quarto-float quarto-figure quarto-figure-center anchored" width="960">
 <figure class="quarto-float quarto-float-fig figure">
@@ -274,16 +274,16 @@ Abbildung&nbsp;3
 </div>
 <p>Correlation of Q8 with KI usage</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dbl</span>(<span class="sc">~</span> <span class="fu">cor</span>(.x, df<span class="sc">$</span>ki_usage, <span class="at">use =</span> <span class="st">"pairwise.complete.obs"</span>))</span>
-<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> <span class="fu">set_names</span>(</span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  correlations,</span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)))</span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(correlations)</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dbl</span>(<span class="sc">~</span> <span class="fu">cor</span>(.x, df<span class="sc">$</span>ki_usage, <span class="at">use =</span> <span class="st">"pairwise.complete.obs"</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> <span class="fu">set_names</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  correlations,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(correlations)</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       Q8_1        Q8_2        Q8_3        Q8_4        Q8_5        Q8_6 
  0.37760485  0.40842699  0.08565472 -0.17464937 -0.12103040  0.24222744 
@@ -310,7 +310,7 @@ Abbildung&nbsp;3
 <li><p>Bei den Herausforderungen von KI hingegen sind sich Nutzende dieser Technologie und solche, die dies nicht tun, relativ einig. Hier werden mangelndes Know-How und Datenschutzbedenken als am zutreffendsten angegeben. Ebenfalls häufig als herausfordernd bewertet ist die Schwierigkeit, die richtige KI-Anwendung zu finden. Hier ist jedoch interessant, dass es eine größere Menge an Leuten gibt, die dies wiederum nicht als herausfordernd bewerten, was in diesem Punkt für Uneinigkeit spricht.</p></li>
 <li><p>Ethische Bedenken und Kosten-Nutzen-Relation scheinen die Befragten jedoch klar nicht als herausfordernd zu empfinden.</p></li>
 </ul>
-<div class="cell" height="20">
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-KI-challenges" class="quarto-float quarto-figure quarto-figure-center anchored" width="960">
 <figure class="quarto-float quarto-float-fig figure">

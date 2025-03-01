@@ -31,7 +31,6 @@ library(here)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
 source(here("R-tools/ggplot.R"))
-library(gridExtra)
 ```
 
 
@@ -218,105 +217,105 @@ knitr::kable(
 ```{r}
 #| label: fig-KI-opinion
 #| warning: false
-#| height: 20
 #| echo: false
+#| fig-width: 10
+#| fig-height: 15
 
-create_density_plot <- function(data, 
-                              x_var,
-                              title,
-                              x_label,
-                              left_label = "",
-                              right_label = "",
-                              group_var = "ki_usage") {
+plot_opinion_density <- function(
+  data,
+  x_var,
+  title,
+  x_label,
+  x_label_left,
+  x_label_right,
+  x_label_pad_width
+) {
+  data <- drop_na(data, {{ x_var }})
+  x <- pull(data, {{ x_var }})
 
-  if (is.logical(data[[group_var]])) {
-    data[[group_var]] <- factor(data[[group_var]], 
-                               levels = c(FALSE, TRUE),
-                               labels = c("Nein", "Ja"))
-  }
-  overall_mean <- mean(data[[x_var]], na.rm = TRUE)
+  global_mean <- mean(x)
 
-  group_means <- data %>%
-    group_by(!!sym(group_var)) %>%
-    summarise(mean_val = mean(!!sym(x_var), na.rm = TRUE))
-
-  cor_test <- cor.test(data[[x_var]], 
-                       as.numeric(data[[group_var]] == "Ja"), 
-                       use = "complete.obs")
+  cor_test <- cor.test(
+    x,
+    as.numeric(data$ki_usage),
+    use = "complete.obs"
+  )
   cor_coeff <- round(cor_test$estimate, 2)
   p_value <- round(cor_test$p.value, 4)
 
-  group_labels <- paste0(group_means[[group_var]], " (Ø: ", round(group_means$mean_val, 1), ")")
-  names(group_labels) <- group_means[[group_var]]
-
-  plot <- ggplot(data, aes(x = !!sym(x_var))) + 
-    geom_density(aes(fill = !!sym(group_var)), color = "black", alpha = 0.6) + 
-    scale_fill_manual(values = c(dv_palette("qualitative")[1], 
-                                dv_palette("qualitative")[2]), 
-                      name = "KI Nutzung",
-                      labels = group_labels) +
-    scale_color_manual(values = c(dv_palette("qualitative")[1], 
-                                 dv_palette("qualitative")[2]), 
-                      name = "KI Nutzung",
-                      labels = group_labels) +
-    theme_dv(base_size = 12) +
+  data %>%
+    mutate(group_mean = round(mean({{ x_var }}), 1), .by = ki_usage) %>%
+    mutate(
+      group_label = if_else(ki_usage, "Ja", "Nein"),
+      group_label = glue::glue("{group_label} (Ø: {group_mean})")
+    ) %>%
+    ggplot(aes({{ x_var }}, -ki_usage, fill = fct_rev(group_label))) +
+    ggridges::geom_density_ridges(
+      quantile_lines = TRUE,
+      quantile_fun = mean,
+      colour = "white",
+      linewidth = 0.75
+    ) +
+    geom_vline(
+      xintercept = global_mean,
+      colour = "white",
+      linetype = "dashed",
+      linewidth = 1
+    ) +
+    scale_x_continuous(limits = c(0, 100), breaks = scales::breaks_width(20)) +
+    scale_fill_dv_d(guide = guide_legend(override.aes = list(colour = NA))) +
+    labs(
+      x = paste(
+        "←",
+        x_label_left,
+        str_dup(" ", x_label_pad_width),
+        x_label_right,
+        "→"
+      ),
+      y = "Dichte →",
+      fill = "KI-Nutzung",
+      title = glue::glue(
+        "**{title}** (Gesamt-Ø: {round(global_mean, 1)})"
+      ),
+      caption = glue::glue(
+        "Korr. {x_label} und KI-Nutzung: *r* = {cor_coeff}, ",
+        "{if (p_value == 0) '*p* < 0.0001' else paste('*p* =', p_value)}"
+      )
+    ) +
+    theme_dv(grid = "XxY") +
     theme(
       axis.text.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      legend.position = "top"
-    ) +
-    annotate("text", x = 0, y = -0.0005, 
-             label = left_label, color = "black", hjust = 0) +
-    annotate("text", x = 98, y = -0.0005, 
-             label = right_label, color = "black", hjust = 1) +
-    geom_vline(data = group_means, 
-               aes(xintercept = mean_val, color = !!sym(group_var)),
-               linetype = "dashed", linewidth = 1) +
-    geom_vline(xintercept = overall_mean, 
-               linetype = "solid", linewidth = 1) +
-    annotate("text", x = overall_mean, y = 0.015, 
-             label = paste0("Gesamt-Ø:\n  ", round(overall_mean, 1)),
-             size = 4, hjust = -0.2, vjust = 1) +
-    labs(
-      title = title,
-      x = x_label,
-      y = "Dichte",
-      caption = paste0("Korr. ", x_label,  " und KI-Nutzung: ",
-                      "r = ", cor_coeff,
-                      ", p = ", p_value)
-    ) +
-    scale_x_continuous(
-      breaks = seq(0, 100, 10),
-      limits = c(0, 100)
+      axis.title.x = element_text(hjust = 0.5),
+      plot.title = marquee::element_marquee(),
+      plot.caption = marquee::element_marquee()
     )
-
-  return(plot)
 }
 
-plot_q9 <- create_density_plot(
+plot_q9 <- plot_opinion_density(
   data = df,
-  x_var = "Q9",
+  x_var = Q9,
   title = "Gesamteinschätzung KI",
   x_label = "Gesamteinschätzung",
-  left_label = "Hype",
-  right_label = "Mehrwert"
+  x_label_left = "Hype",
+  x_label_right = "Mehrwert",
+  x_label_pad_width = 112
 )
 
-plot_q17 <- create_density_plot(
+plot_q17 <- plot_opinion_density(
   data = df,
-  x_var = "Q17",
+  x_var = Q17,
   title = "Bedarf an KI in der Vereinsarbeit",
   x_label = "Bedarf",
-  left_label = "Es gibt keinen Bedarf",
-  right_label = "Es gibt Bedarf"
+  x_label_left = "Es gibt keinen Bedarf",
+  x_label_right = "Es gibt Bedarf",
+  x_label_pad_width = 73
 )
 
-grid.arrange(
-  plot_q9, 
-  plot_q17, 
+gridExtra::grid.arrange(
+  plot_q9,
+  plot_q17,
   ncol = 1
 )
-
 ```
 
 
