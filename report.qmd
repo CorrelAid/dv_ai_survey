@@ -27,18 +27,10 @@ knitr::opts_chunk$set(
 
 library(tidyverse)
 library(here)
-library(colorBlindness)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
 source(here("R-tools/ggplot.R"))
-library(ggplot2)
-library(showtext)
-library(systemfonts)
-library(corrr)
-library(GGally)
-library(grid)
 library(gridExtra)
-
 ```
 
 
@@ -46,15 +38,13 @@ library(gridExtra)
 #| warning: false
 #| echo: false
 df <- readr::read_delim("data/final.csv")
-
-res <- nrow(df)
-
-cat("Anzahl der Befragten: ", res, "\n")
 ```
 
 
+Anzahl der Befragten: `r nrow(df)`
 
-### Anteil der Befragten, die KI aktiv nutzen und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)
+
+### Anteil der Befragten, die KI aktiv nutzen, und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)
 
 * Insgesamt nutzen 32% der Befragten aktiv KI. Den meisten Einsatz findet KI in der Öffentlichkeitsarbeit. 24.5% aller Befragten setzten KI in diesem Bereich ein, gefolgt von Kommunikation (14.4%). In anderen Bereichen, zum Beispiel in der Verwaltung (1.4%) wird KI eher nicht genutzt.
 
@@ -68,134 +58,78 @@ cat("Anzahl der Befragten: ", res, "\n")
 #| warning: false
 #| echo: false
 #| label: fig-KI-usage
+#| fig-width: 10
+#| fig-height: 8
 
-process_usage_data <- function(df, prefix, options_map, type, extra_row = NULL) {
-  base_data <- df %>%
-    select(starts_with(prefix)) %>% 
-    pivot_longer(cols = everything(), 
-                names_to = "question", 
-                values_to = "response") %>%
-    filter(response == TRUE) %>%
-    count(question, name = "Count") %>% 
-    left_join(options_map, by = "question") %>%
-    mutate(percent = Count / nrow(df) * 100,  
-           type = type)
+usage <- df %>%
+  select(starts_with("Q4"), starts_with("Q16"), -Q4_open) %>%
+  pivot_longer(everything(), names_to = "question", values_to = "response") %>%
+  inner_join(
+    bind_rows(Q4_Options_cleaned_map, Q16_Options_cleaned_map),
+    by = join_by(question)
+  ) %>%
+  mutate(battery = ifelse(startsWith(question, "Q4"), "current", "desired")) %>%
+  summarise(
+    n = sum(response),
+    prop = mean(response),
+    .by = c(battery, label)
+  ) %>%
+  rename(item = label)
 
-  if (!is.null(extra_row)) {
-    base_data <- bind_rows(
-      base_data %>% rename(label = label),
-      extra_row
-    )
-  }
+usage_sums <- df %>%
+  select(-Q4_open) %>%
+  mutate(
+    current = if_any(starts_with("Q4"), identity),
+    desired = if_any(starts_with("Q16"), identity),
+    .keep = "none"
+  ) %>%
+  pivot_longer(everything(), names_to = "battery", values_to = "response") %>%
+  summarise(prop = mean(response), .by = battery) %>%
+  deframe() %>%
+  scales::label_percent(0.1)()
 
-  return(base_data)
-}
-
-create_usage_plot <- function(data, title, caption = NULL, usage_percent = NULL, fill_colors = c("#004fa3", "#f2f2f2")) {
-  legend_labels <- if(title=="In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:") {
-    c(sprintf("KI-Nutzung (%.1f%%)", usage_percent), "Keine Auswahl")
-  } else {
-    c(sprintf("Nutzungswunsch (%.1f%%)", usage_percent), "Keine Auswahl")
-  }
-
-  p <- ggplot(data,
-              aes(x = reorder(label, percent),
-                  y = percent,
-                  fill = label == "Keine Auswahl")) +
-    geom_bar(stat = "identity") +
-    coord_flip() +
-    theme_dv(
-      base_size = 12,
-      grid = "x"  
-    ) +
-    scale_fill_manual(
-      values = fill_colors,
-      labels = legend_labels,
-      name = NULL  
-    ) +
-    scale_y_continuous(
-      limits = c(0, 100), 
-      expand = expansion(mult = c(0, 0.1)),
-      labels = label_number_trimmed()
-    ) +
-    labs(title = title,
-         x = "",
-         y = "Prozent",
-         caption = caption) +
-    geom_text(aes(label = sprintf("%d (%.1f%%)", Count, percent)),
-              hjust = -0.1,
-              size = 3)
-
-  return(p)
-}
-
-
-
-non_users <- tibble(
-  label = "Keine Auswahl", 
-  Count = sum(!df$ki_usage),
-  percent = Count / nrow(df) * 100,  
-  type = "Aktuelle Nutzung"
+usage_plot_title <- marquee::marquee_glue(
+  "{.#588001 **Aktuelle** ({usage_sums[['current']]})} vs. **gewünschte KI-Nutzung** ({usage_sums[['desired']]})"
 )
 
-current_usage <- process_usage_data(
-  df %>% select(-Q4_open), 
-  "Q4", 
-  Q4_Options_cleaned_map, 
-  "Aktuelle Nutzung",
-  non_users
-) %>% filter(percent > 1)
-
-no_selection_count <- df %>%
-  select(starts_with("Q16")) %>%
-  apply(1, function(x) !any(x == TRUE, na.rm = TRUE)) %>%
-  sum()
-
-desired_usage <- process_usage_data(
-  df, 
-  "Q16", 
-  Q16_Options_cleaned_map, 
-  "Gewünschte Nutzung"
-) %>%
-  bind_rows(
-    tibble(
-      question = "no_selection",
-      Count = no_selection_count,
-      label = "Keine Auswahl",
-      percent = (no_selection_count / nrow(df)) * 100,
-      type = "Gewünschte Nutzung"
-    )
+usage %>%
+  filter(prop > 0.01) %>%
+  mutate(
+    prop_plot = if_else(battery == "current", -prop, prop),
+    label = glue::glue("{n} ({round(prop * 100, 1)}%)"),
+    label = if_else(
+      prop_plot < 0,
+      str_pad(label, 11),
+      str_pad(label, 11, "right")
+    ),
+    item = fct_reorder(item, prop_plot, max)
+  ) %>%
+  ggplot(aes(x = prop_plot, y = item)) +
+  geom_col(aes(fill = battery), width = 0.65) +
+  geom_text(
+    aes(
+      x = prop_plot + sign(prop_plot) * 0.14,
+      label = label,
+      colour = battery
+    ),
+    family = "Fira Mono",
+  ) +
+  scale_fill_dv_d(reverse = TRUE) +
+  scale_colour_dv_d(reverse = TRUE) +
+  scale_x_continuous(limits = c(-0.42, NA)) +
+  scale_y_discrete(expand = expansion(add = 1)) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = usage_plot_title,
+    caption = "Mehrfachauswahl möglich. Nur Werte >1% dargestellt."
+  ) +
+  theme_dv(grid = "XxY") +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "off",
+    plot.title = marquee::element_marquee()
   )
-
-usage_percent <- 100 - current_usage$percent[current_usage$label == "Keine Auswahl"] 
-
-desired_usage_percent <- 100 - desired_usage$percent[desired_usage$label == "Keine Auswahl"] 
-
-
-# Create the individual plots with simpler titles
-p1 <- create_usage_plot(
-  current_usage,
-  "In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:",
-  caption = "Mehrfachauswahl möglich. Nur Werte >1% dargestellt.",
-  usage_percent = usage_percent,
-  fill_colors = c(dv_palette("qualitative")[1], "#f2f2f2")
-)
-
-p2 <- create_usage_plot(
-  desired_usage,
-  "Worin soll dich KI unterstützen?",
-  caption = "Mehrfachauswahl möglich.",
-  usage_percent = desired_usage_percent,  # Changed from desired_usage to desired_usage_percent
-  fill_colors = c(dv_palette("qualitative")[2], "#f2f2f2")
-)
-
-
-# Arrange plots with an overall title
-grid.arrange(
-  p1, 
-  p2, 
-  ncol = 1)
-
 ```
 
 ```{r}
