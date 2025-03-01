@@ -357,6 +357,16 @@ df_opps %>%
     breaks = ggdist::breaks_fixed(width = 5),
     align = "center"
   ) +
+  geom_segment(
+    data = annotations,
+    aes(
+      x = mean_value,
+      y = 0,
+      yend = Inf * (ki_usage - 0.5),
+      colour = ki_usage
+    ),
+    show.legend = FALSE
+  ) +
   geom_hline(aes(yintercept = 0), colour = "white") +
   geom_vline(
     data = annotations,
@@ -367,7 +377,7 @@ df_opps %>%
   geom_text(
     data = annotations,
     aes(x = overall_mean, y = Inf, label = sprintf("Ø %.1f", overall_mean)),
-    vjust = 2,
+    vjust = 2.5,
     hjust = -0.1,
     family = "Fira Mono",
     size = 4,
@@ -379,15 +389,14 @@ df_opps %>%
     name = "KI-Nutzung",
     labels = function(x) if (is.logical(x)) ifelse(x, "Ja", "Nein") else x,
   ) +
+  scale_colour_dv_d() +
   labs(
     title = "Einschätzung der Vorteile von KI differenziert nach Nutzung",
     x = "Einschätzung →",
     y = "← Häufigkeit →"
   ) +
   theme_dv(grid = "XxY") +
-  theme(
-    axis.text.y = element_blank()
-  )
+  theme(axis.text.y = element_blank())
 ```
 
 Correlation of Q8 with KI usage
