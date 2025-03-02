@@ -446,66 +446,55 @@ print(correlations)
 ```{r}
 #| warning: false
 #| label: fig-KI-challenges
-#| height: 20
 #| echo: false
+#| fig-width: 10
+#| fig-height: 20
 
-df_long <- df %>%
-  select(starts_with("Q5"), -Q5_open, -Q5_9) %>% 
-  pivot_longer(cols = starts_with("Q5"), 
-               names_to = "question", 
-               values_to = "rank") %>% 
-  left_join(Q5_Options_cleaned_map, by = "question")
-
-total_responses <- nrow(df)
-
-df_long %>% 
-  group_by(label) %>%
-  mutate(mean_rank = mean(rank),
-         sd_rank = sd(rank)) %>%
-  group_by(label, rank) %>%
-  mutate(count = n(),
-         pct = (count/total_responses) * 100) %>%
-  # Calculate max count for each facet
-  group_by(label) %>%
-  mutate(max_count = max(count)) %>%
-  ggplot(aes(x = rank)) + 
-  geom_bar(
-    fill = dv_palette("qualitative")[1],
-    alpha = 0.6
-  ) + 
-  geom_vline(aes(xintercept = mean_rank), 
-             linetype = "dotted") +
-  # Use max_count for y-position scaling
+df %>%
+  select(starts_with("Q5"), -Q5_open, -Q5_9) %>%
+  pivot_longer(
+    cols = starts_with("Q5"),
+    names_to = "question",
+    values_to = "rank"
+  ) %>%
+  left_join(Q5_Options_cleaned_map, by = "question") %>%
+  add_count(label, rank, name = "count") %>%
+  mutate(
+    pct = count / n() * 100,
+    mean_rank = mean(rank),
+    sd_rank = sd(rank),
+    .by = label
+  ) %>%
+  ggplot(aes(x = rank)) +
+  geom_vline(aes(xintercept = mean_rank), colour = "#616161") +
+  geom_bar(aes(fill = factor(rank)), width = 0.8) +
   geom_text(
-    data = . %>% group_by(label) %>% slice(1),
-    aes(x = mean_rank, 
-        y = max_count * 0.8,
-        label = sprintf("Ø %.1f", mean_rank)),
-    vjust = -1, hjust=-0.3
+    data = . %>% slice_head(n = 1, by = label),
+    aes(x = mean_rank, y = -Inf, label = sprintf("Ø %.1f", mean_rank)),
+    vjust = 1.5,
+    hjust = 0.5,
+    family = "Fira Mono",
+    size = 4,
+    colour = "#616161"
   ) +
-  facet_wrap(~forcats::fct_reorder(label, mean_rank), ncol = 1) +
-  scale_x_continuous(
-    breaks = seq(min(df_long$rank), max(df_long$rank), 1),
-    trans = "reverse"
-  ) +
-  scale_y_continuous() +
+  facet_wrap(~ forcats::fct_reorder(label, mean_rank), ncol = 1) +
+  scale_x_reverse(breaks = scales::breaks_width(-1)) +
+  scale_fill_dv_d(palette = "sequential") +
+  coord_cartesian(clip = "off") +
   labs(
     title = "Ranking der Herausforderungen für aktive KI-Nutzung",
-    x = "Ranking",
-    y = "Häufigkeit"
+    x = "Ranking →",
+    y = "Häufigkeit →"
   ) +
-  theme_dv(
-    base_size = 16,
-    grid = "XY"
-  ) +
+  theme_dv(grid = "Yy") +
   theme(
-    strip.text = element_text(angle = 0),
-    panel.spacing = unit(1, "cm"),
-    legend.position = "none"
+    axis.text.x = element_text(margin = margin(t = 16)),
+    axis.ticks.y = element_line(colour = "#616161"),
+    legend.position = "none",
+    panel.grid = element_line(colour = "white"),
+    panel.ontop = TRUE,
+    panel.spacing = unit(1, "cm")
   )
-
-
-
 ```
 
 
