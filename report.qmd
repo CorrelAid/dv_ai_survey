@@ -129,6 +129,7 @@ usage %>%
     guide = guide_axis(minor.ticks = TRUE),
     expand = expansion(add = 1)
   ) +
+  coord_cartesian(clip = "off") +
   labs(
     x = NULL,
     y = NULL,
