@@ -24,6 +24,7 @@ knitr::opts_chunk$set(dev = "ragg_png")
 
 library(tidyverse)
 library(here)
+library(ggridges)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
 source(here("R-tools/ggplot.R"))
@@ -394,7 +395,7 @@ df_opps %>%
   labs(
     title = "Einschätzung der Vorteile von KI differenziert nach Nutzung",
     x = "Einschätzung →",
-    y = "← Häufigkeit →"
+    y = "Häufigkeit →"
   ) +
   theme_dv(grid = "XxY") +
   theme(axis.text.y = element_blank())
@@ -487,13 +488,11 @@ df %>%
     x = "Ranking →",
     y = "Häufigkeit →"
   ) +
-  theme_dv(grid = "Yy") +
+  theme_dv(grid = "XxY") +
   theme(
     axis.text.x = element_text(margin = margin(t = 16)),
     axis.ticks.y = element_line(colour = "#616161"),
     legend.position = "none",
-    panel.grid = element_line(colour = "white"),
-    panel.ontop = TRUE,
     panel.spacing = unit(1, "cm")
   )
 ```
