@@ -20,25 +20,13 @@ lang: de
 ```{r setup, include=FALSE}
 #| warning: false
 #| echo: false
-knitr::opts_chunk$set(
-  fig.width = 10,
-  fig.height = 15
-)
+knitr::opts_chunk$set(dev = "ragg_png")
 
 library(tidyverse)
 library(here)
-library(colorBlindness)
 source(here("R-tools/helpers.R"))
 source(here("R-tools/config.R"))
 source(here("R-tools/ggplot.R"))
-library(ggplot2)
-library(showtext)
-library(systemfonts)
-library(corrr)
-library(GGally)
-library(grid)
-library(gridExtra)
-
 ```
 
 
@@ -46,15 +34,13 @@ library(gridExtra)
 #| warning: false
 #| echo: false
 df <- readr::read_delim("data/final.csv")
-
-res <- nrow(df)
-
-cat("Anzahl der Befragten: ", res, "\n")
 ```
 
 
+Anzahl der Befragten: `r nrow(df)`
 
-### Anteil der Befragten, die KI aktiv nutzen und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)
+
+### Anteil der Befragten, die KI aktiv nutzen, und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)
 
 * Insgesamt nutzen 32% der Befragten aktiv KI. Den meisten Einsatz findet KI in der Öffentlichkeitsarbeit. 24.5% aller Befragten setzten KI in diesem Bereich ein, gefolgt von Kommunikation (14.4%). In anderen Bereichen, zum Beispiel in der Verwaltung (1.4%) wird KI eher nicht genutzt.
 
@@ -68,134 +54,95 @@ cat("Anzahl der Befragten: ", res, "\n")
 #| warning: false
 #| echo: false
 #| label: fig-KI-usage
+#| fig-width: 10
+#| fig-height: 9
 
-process_usage_data <- function(df, prefix, options_map, type, extra_row = NULL) {
-  base_data <- df %>%
-    select(starts_with(prefix)) %>% 
-    pivot_longer(cols = everything(), 
-                names_to = "question", 
-                values_to = "response") %>%
-    filter(response == TRUE) %>%
-    count(question, name = "Count") %>% 
-    left_join(options_map, by = "question") %>%
-    mutate(percent = Count / nrow(df) * 100,  
-           type = type)
+usage <- df %>%
+  select(starts_with("Q4"), starts_with("Q16"), -Q4_open) %>%
+  pivot_longer(everything(), names_to = "question", values_to = "response") %>%
+  inner_join(
+    bind_rows(Q4_Options_cleaned_map, Q16_Options_cleaned_map),
+    by = join_by(question)
+  ) %>%
+  mutate(battery = ifelse(startsWith(question, "Q4"), "current", "desired")) %>%
+  summarise(
+    n = sum(response),
+    prop = mean(response),
+    .by = c(battery, label)
+  ) %>%
+  rename(item = label)
 
-  if (!is.null(extra_row)) {
-    base_data <- bind_rows(
-      base_data %>% rename(label = label),
-      extra_row
-    )
-  }
+usage_sums <- df %>%
+  select(-Q4_open) %>%
+  mutate(
+    current = if_any(starts_with("Q4"), identity),
+    desired = if_any(starts_with("Q16"), identity),
+    .keep = "none"
+  ) %>%
+  pivot_longer(everything(), names_to = "battery", values_to = "response") %>%
+  summarise(prop = mean(response), .by = battery) %>%
+  deframe() %>%
+  scales::label_percent(0.1)()
 
-  return(base_data)
-}
-
-create_usage_plot <- function(data, title, caption = NULL, usage_percent = NULL, fill_colors = c("#004fa3", "#f2f2f2")) {
-  legend_labels <- if(title=="In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:") {
-    c(sprintf("KI-Nutzung (%.1f%%)", usage_percent), "Keine Auswahl")
-  } else {
-    c(sprintf("Nutzungswunsch (%.1f%%)", usage_percent), "Keine Auswahl")
-  }
-
-  p <- ggplot(data,
-              aes(x = reorder(label, percent),
-                  y = percent,
-                  fill = label == "Keine Auswahl")) +
-    geom_bar(stat = "identity") +
-    coord_flip() +
-    theme_dv(
-      base_size = 12,
-      grid = "x"  
-    ) +
-    scale_fill_manual(
-      values = fill_colors,
-      labels = legend_labels,
-      name = NULL  
-    ) +
-    scale_y_continuous(
-      limits = c(0, 100), 
-      expand = expansion(mult = c(0, 0.1)),
-      labels = label_number_trimmed()
-    ) +
-    labs(title = title,
-         x = "",
-         y = "Prozent",
-         caption = caption) +
-    geom_text(aes(label = sprintf("%d (%.1f%%)", Count, percent)),
-              hjust = -0.1,
-              size = 3)
-
-  return(p)
-}
-
-
-
-non_users <- tibble(
-  label = "Keine Auswahl", 
-  Count = sum(!df$ki_usage),
-  percent = Count / nrow(df) * 100,  
-  type = "Aktuelle Nutzung"
+usage_plot_title <- marquee::marquee_glue(
+  "{.#588001 **Aktuelle** ({usage_sums[['current']]})} und **gewünschte KI-Nutzung** ({usage_sums[['desired']]})"
 )
 
-current_usage <- process_usage_data(
-  df %>% select(-Q4_open), 
-  "Q4", 
-  Q4_Options_cleaned_map, 
-  "Aktuelle Nutzung",
-  non_users
-) %>% filter(percent > 1)
+usage_plot_caption <-
+  "Mehrfachauswahl möglich. Nur Werte >1% dargestellt.
 
-no_selection_count <- df %>%
-  select(starts_with("Q16")) %>%
-  apply(1, function(x) !any(x == TRUE, na.rm = TRUE)) %>%
-  sum()
+Wortlaut der Fragen:
 
-desired_usage <- process_usage_data(
-  df, 
-  "Q16", 
-  Q16_Options_cleaned_map, 
-  "Gewünschte Nutzung"
-) %>%
-  bind_rows(
-    tibble(
-      question = "no_selection",
-      Count = no_selection_count,
-      label = "Keine Auswahl",
-      percent = (no_selection_count / nrow(df)) * 100,
-      type = "Gewünschte Nutzung"
-    )
+> {.#588001 In den folgenden Bereichen nutze ich KI-Anwendungen für meine Vereinsarbeit aktiv:}
+>
+> {.#004fa3 Worin soll dich KI unterstützen?}"
+
+usage %>%
+  filter(prop > 0.01) %>%
+  mutate(
+    prop_plot = if_else(battery == "current", -prop, prop),
+    label = glue::glue("{n} ({round(prop * 100, 1)}%)"),
+    label = if_else(
+      prop_plot < 0,
+      str_pad(label, 11),
+      str_pad(label, 11, "right")
+    ),
+    item = fct_reorder(item, prop_plot, max)
+  ) %>%
+  ggplot(aes(x = prop_plot, y = item)) +
+  geom_col(aes(fill = battery, alpha = item == "Sonstiges"), width = 0.65) +
+  geom_text(
+    aes(
+      x = prop_plot + sign(prop_plot) * 0.14,
+      label = label,
+      colour = battery
+    ),
+    family = "Fira Mono",
+    size = 4
+  ) +
+  scale_colour_dv_d(reverse = TRUE) +
+  scale_fill_dv_d(reverse = TRUE) +
+  scale_alpha_manual(values = c(1, 0.5)) +
+  scale_x_continuous(breaks = 0, limits = c(-0.42, NA)) +
+  scale_y_discrete(
+    minor_breaks = scales::breaks_width(1, 0.5),
+    guide = guide_axis(minor.ticks = TRUE),
+    expand = expansion(add = 1)
+  ) +
+  coord_cartesian(clip = "off") +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = usage_plot_title,
+    caption = usage_plot_caption
+  ) +
+  theme_dv(grid = "Xy") +
+  theme(
+    axis.text.x = element_blank(),
+    legend.position = "off",
+    plot.title = marquee::element_marquee(),
+    plot.caption = marquee::element_marquee()
   )
-
-usage_percent <- 100 - current_usage$percent[current_usage$label == "Keine Auswahl"] 
-
-desired_usage_percent <- 100 - desired_usage$percent[desired_usage$label == "Keine Auswahl"] 
-
-
-# Create the individual plots with simpler titles
-p1 <- create_usage_plot(
-  current_usage,
-  "In den folgenden Bereichen nutzen ich KI-Anwendungen für meine Vereinsarbeit aktiv:",
-  caption = "Mehrfachauswahl möglich. Nur Werte >1% dargestellt.",
-  usage_percent = usage_percent,
-  fill_colors = c(dv_palette("qualitative")[1], "#f2f2f2")
-)
-
-p2 <- create_usage_plot(
-  desired_usage,
-  "Worin soll dich KI unterstützen?",
-  caption = "Mehrfachauswahl möglich.",
-  usage_percent = desired_usage_percent,  # Changed from desired_usage to desired_usage_percent
-  fill_colors = c(dv_palette("qualitative")[2], "#f2f2f2")
-)
-
-
-# Arrange plots with an overall title
-grid.arrange(
-  p1, 
-  p2, 
-  ncol = 1)
-
 ```
 
 ```{r}
@@ -205,19 +152,18 @@ grid.arrange(
 df %>%
   select(starts_with("Q10_") & !matches("open$")) %>%
   summarise(across(everything(), sum)) %>%
-  pivot_longer(everything(), 
-              names_to = "option",
-              values_to = "count") %>%
+  pivot_longer(everything(), names_to = "option", values_to = "count") %>%
   left_join(Q10_Options_map, by = c("option" = "question")) %>%
   mutate(
-    total_percent = count/nrow(df) * 100,
-    active_users_percent = count/nrow(df %>% filter(ki_usage == TRUE)) * 100,
+    total_percent = count / nrow(df) * 100,
+    active_users_percent = count / nrow(df %>% filter(ki_usage == TRUE)) * 100,
     label = str_wrap(label, width = 30)
   ) %>%
   filter(total_percent > 5) %>%
   select(label, count, total_percent, active_users_percent) %>%
   arrange(desc(count)) %>%
   mutate(
+    label = str_replace(label, "\n", " "),
     total_percent = sprintf("%.1f%%", total_percent),
     active_users_percent = sprintf("%.1f%%", active_users_percent)
   ) %>%
@@ -226,7 +172,8 @@ df %>%
     "Anzahl" = count,
     "% aller Befragten" = total_percent,
     "% der KI-Nutzer" = active_users_percent
-  )
+  ) %>%
+  knitr::kable(align = "lrrr")
 ```
 
 ```{r}
@@ -237,10 +184,13 @@ q11 <- readr::read_delim("data/open_Q11.csv")
 
 filtered_summaries <- q11 %>%
   filter(count > 4) %>%
-  arrange(desc(count)) %>% 
-  select(extracted_app, summary, count) 
+  arrange(desc(count)) %>%
+  select(extracted_app, summary, count)
 
-knitr::kable(filtered_summaries, col.names = c("App", "Zusammenfassung", "Anzahl"))
+knitr::kable(
+  filtered_summaries,
+  col.names = c("App", "Zusammenfassung", "Anzahl")
+)
 ```
 
 
@@ -265,105 +215,105 @@ knitr::kable(filtered_summaries, col.names = c("App", "Zusammenfassung", "Anzahl
 ```{r}
 #| label: fig-KI-opinion
 #| warning: false
-#| height: 20
 #| echo: false
+#| fig-width: 10
+#| fig-height: 15
 
-create_density_plot <- function(data, 
-                              x_var,
-                              title,
-                              x_label,
-                              left_label = "",
-                              right_label = "",
-                              group_var = "ki_usage") {
+plot_opinion_density <- function(
+  data,
+  x_var,
+  title,
+  x_label,
+  x_label_left,
+  x_label_right,
+  x_label_pad_width
+) {
+  data <- drop_na(data, {{ x_var }})
+  x <- pull(data, {{ x_var }})
 
-  if (is.logical(data[[group_var]])) {
-    data[[group_var]] <- factor(data[[group_var]], 
-                               levels = c(FALSE, TRUE),
-                               labels = c("Nein", "Ja"))
-  }
-  overall_mean <- mean(data[[x_var]], na.rm = TRUE)
+  global_mean <- mean(x)
 
-  group_means <- data %>%
-    group_by(!!sym(group_var)) %>%
-    summarise(mean_val = mean(!!sym(x_var), na.rm = TRUE))
-
-  cor_test <- cor.test(data[[x_var]], 
-                       as.numeric(data[[group_var]] == "Ja"), 
-                       use = "complete.obs")
+  cor_test <- cor.test(
+    x,
+    as.numeric(data$ki_usage),
+    use = "complete.obs"
+  )
   cor_coeff <- round(cor_test$estimate, 2)
   p_value <- round(cor_test$p.value, 4)
 
-  group_labels <- paste0(group_means[[group_var]], " (Ø: ", round(group_means$mean_val, 1), ")")
-  names(group_labels) <- group_means[[group_var]]
-
-  plot <- ggplot(data, aes(x = !!sym(x_var))) + 
-    geom_density(aes(fill = !!sym(group_var)), color = "black", alpha = 0.6) + 
-    scale_fill_manual(values = c(dv_palette("qualitative")[1], 
-                                dv_palette("qualitative")[2]), 
-                      name = "KI Nutzung",
-                      labels = group_labels) +
-    scale_color_manual(values = c(dv_palette("qualitative")[1], 
-                                 dv_palette("qualitative")[2]), 
-                      name = "KI Nutzung",
-                      labels = group_labels) +
-    theme_dv(base_size = 12) +
+  data %>%
+    mutate(group_mean = round(mean({{ x_var }}), 1), .by = ki_usage) %>%
+    mutate(
+      group_label = if_else(ki_usage, "Ja", "Nein"),
+      group_label = glue::glue("{group_label} (Ø: {group_mean})")
+    ) %>%
+    ggplot(aes({{ x_var }}, -ki_usage, fill = fct_rev(group_label))) +
+    ggridges::geom_density_ridges(
+      quantile_lines = TRUE,
+      quantile_fun = mean,
+      colour = "white",
+      linewidth = 0.75
+    ) +
+    geom_vline(
+      xintercept = global_mean,
+      colour = "white",
+      linetype = "dashed",
+      linewidth = 1
+    ) +
+    scale_x_continuous(limits = c(0, 100), breaks = scales::breaks_width(20)) +
+    scale_fill_dv_d(guide = guide_legend(override.aes = list(colour = NA))) +
+    labs(
+      x = paste(
+        "←",
+        x_label_left,
+        str_dup(" ", x_label_pad_width),
+        x_label_right,
+        "→"
+      ),
+      y = "Dichte →",
+      fill = "KI-Nutzung",
+      title = glue::glue(
+        "**{title}** (Gesamt-Ø: {round(global_mean, 1)})"
+      ),
+      caption = glue::glue(
+        "Korr. {x_label} und KI-Nutzung: *r* = {cor_coeff}, ",
+        "{if (p_value == 0) '*p* < 0.0001' else paste('*p* =', p_value)}"
+      )
+    ) +
+    theme_dv(grid = "XxY") +
     theme(
       axis.text.y = element_blank(),
-      axis.ticks.y = element_blank(),
-      legend.position = "top"
-    ) +
-    annotate("text", x = 0, y = -0.0005, 
-             label = left_label, color = "black", hjust = 0) +
-    annotate("text", x = 98, y = -0.0005, 
-             label = right_label, color = "black", hjust = 1) +
-    geom_vline(data = group_means, 
-               aes(xintercept = mean_val, color = !!sym(group_var)),
-               linetype = "dashed", linewidth = 1) +
-    geom_vline(xintercept = overall_mean, 
-               linetype = "solid", linewidth = 1) +
-    annotate("text", x = overall_mean, y = 0.015, 
-             label = paste0("Gesamt-Ø:\n  ", round(overall_mean, 1)),
-             size = 4, hjust = -0.2, vjust = 1) +
-    labs(
-      title = title,
-      x = x_label,
-      y = "Dichte",
-      caption = paste0("Korr. ", x_label,  " und KI-Nutzung: ",
-                      "r = ", cor_coeff,
-                      ", p = ", p_value)
-    ) +
-    scale_x_continuous(
-      breaks = seq(0, 100, 10),
-      limits = c(0, 100)
+      axis.title.x = element_text(hjust = 0.5),
+      plot.title = marquee::element_marquee(),
+      plot.caption = marquee::element_marquee()
     )
-
-  return(plot)
 }
 
-plot_q9 <- create_density_plot(
+plot_q9 <- plot_opinion_density(
   data = df,
-  x_var = "Q9",
+  x_var = Q9,
   title = "Gesamteinschätzung KI",
   x_label = "Gesamteinschätzung",
-  left_label = "Hype",
-  right_label = "Mehrwert"
+  x_label_left = "Hype",
+  x_label_right = "Mehrwert",
+  x_label_pad_width = 112
 )
 
-plot_q17 <- create_density_plot(
+plot_q17 <- plot_opinion_density(
   data = df,
-  x_var = "Q17",
+  x_var = Q17,
   title = "Bedarf an KI in der Vereinsarbeit",
   x_label = "Bedarf",
-  left_label = "Es gibt keinen Bedarf",
-  right_label = "Es gibt Bedarf"
+  x_label_left = "Es gibt keinen Bedarf",
+  x_label_right = "Es gibt Bedarf",
+  x_label_pad_width = 73
 )
 
-grid.arrange(
-  plot_q9, 
-  plot_q17, 
+gridExtra::grid.arrange(
+  plot_q9,
+  plot_q17,
   ncol = 1
 )
-
 ```
 
 
@@ -378,76 +328,76 @@ grid.arrange(
 #| label: fig-KI-benefits
 #| warning: false
 #| echo: false
+#| fig-width: 10
+#| fig-height: 20
 
-knitr::opts_chunk$set(
-  fig.height = 20
-)
-
-df_opps <- df %>% 
-  select(matches("^Q8_[0-9]+$"), ki_usage) %>%  
-  pivot_longer(cols = matches("^Q8_[0-9]+$"), 
-               names_to = "question", 
-               values_to = "response") %>%
+df_opps <- df %>%
+  select(matches("^Q8_[0-9]+$"), ki_usage) %>%
+  pivot_longer(
+    cols = -ki_usage,
+    names_to = "question",
+    values_to = "response"
+  ) %>%
   filter(!is.na(response)) %>%
   left_join(Q8_Options_map, by = "question") %>%
-  group_by(label, ki_usage) %>%
   filter(label != "Sonstiges und zwar") %>%
-  mutate(mean_value = mean(response, na.rm = TRUE)) %>%  
-  ungroup()
-
-overall_means <- df_opps %>%
-  group_by(label) %>%
-  summarise(overall_mean = mean(response, na.rm = TRUE)) %>%
-  ungroup()
-
-df_opps <- df_opps %>%
-  left_join(overall_means, by = "label")
+  mutate(
+    mean_value = mean(response, na.rm = TRUE),
+    .by = c(label, ki_usage)
+  ) %>%
+  mutate(overall_mean = mean(response, na.rm = TRUE), .by = label)
 
 annotations <- df_opps %>%
   distinct(label, ki_usage, mean_value, overall_mean)
 
-df_opps %>% 
+df_opps %>%
   ggplot(aes(x = response, fill = ki_usage)) +
-  geom_histogram(binwidth = 5, position = "identity", alpha = 0.6) +
-  geom_vline(aes(xintercept = overall_mean), 
-             linetype = "dotted") + 
-  geom_text(data = annotations,  
-            aes(x = overall_mean, y = Inf, 
-                label = sprintf("Ø %.1f", overall_mean)),
-            vjust = 1.5, hjust = -0.1) +
-  facet_wrap(~reorder(label, -overall_mean), ncol = 1) +  
-  scale_y_continuous(breaks = seq(0, 100, by = 10)) +
+  ggdist::stat_slab(
+    aes(side = if_else(ki_usage, "top", "bottom")),
+    density = "histogram",
+    breaks = ggdist::breaks_fixed(width = 5),
+    align = "center"
+  ) +
+  geom_segment(
+    data = annotations,
+    aes(
+      x = mean_value,
+      y = 0,
+      yend = Inf * (ki_usage - 0.5),
+      colour = ki_usage
+    ),
+    show.legend = FALSE
+  ) +
+  geom_hline(aes(yintercept = 0), colour = "white") +
+  geom_vline(
+    data = annotations,
+    aes(xintercept = overall_mean),
+    linetype = "dashed",
+    colour = "#616161"
+  ) +
+  geom_text(
+    data = annotations,
+    aes(x = overall_mean, y = Inf, label = sprintf("Ø %.1f", overall_mean)),
+    vjust = 2.5,
+    hjust = -0.1,
+    family = "Fira Mono",
+    size = 4,
+    colour = "#616161"
+  ) +
+  facet_wrap(~ reorder(label, -overall_mean), ncol = 1) +
+  scale_x_continuous(breaks = scales::breaks_width(20)) +
   scale_fill_dv_d(
-    name = "KI Nutzung",  
-    labels = function(x) if(is.logical(x)) ifelse(x, "Ja", "Nein") else x, 
-    guide = guide_legend(
-      override.aes = list(alpha = 0.6),
-      title.position = "top"
-    )
+    name = "KI-Nutzung",
+    labels = function(x) if (is.logical(x)) ifelse(x, "Ja", "Nein") else x,
   ) +
-  scale_colour_dv_d(
-    name = "KI Nutzung", 
-    labels = function(x) if(is.logical(x)) ifelse(x, "Ja", "Nein") else x,  
-    guide = "none"
-  ) +
+  scale_colour_dv_d() +
   labs(
     title = "Einschätzung der Vorteile von KI differenziert nach Nutzung",
-    x = "Einschätzung",
-    y = "Häufigkeit"
- ) +
-  theme_dv(
-    base_size = 16,
-    grid = "XY"
+    x = "Einschätzung →",
+    y = "← Häufigkeit →"
   ) +
-  theme(
-    strip.text = element_text(angle = 0),
-    strip.background = element_blank(),
-    panel.spacing = unit(1, "cm"),
-    legend.position = "top",
-    legend.justification = "left"
-  ) 
-
-
+  theme_dv(grid = "XxY") +
+  theme(axis.text.y = element_blank())
 ```
 
 Correlation of Q8 with KI usage
@@ -497,66 +447,55 @@ print(correlations)
 ```{r}
 #| warning: false
 #| label: fig-KI-challenges
-#| height: 20
 #| echo: false
+#| fig-width: 10
+#| fig-height: 20
 
-df_long <- df %>%
-  select(starts_with("Q5"), -Q5_open, -Q5_9) %>% 
-  pivot_longer(cols = starts_with("Q5"), 
-               names_to = "question", 
-               values_to = "rank") %>% 
-  left_join(Q5_Options_cleaned_map, by = "question")
-
-total_responses <- nrow(df)
-
-df_long %>% 
-  group_by(label) %>%
-  mutate(mean_rank = mean(rank),
-         sd_rank = sd(rank)) %>%
-  group_by(label, rank) %>%
-  mutate(count = n(),
-         pct = (count/total_responses) * 100) %>%
-  # Calculate max count for each facet
-  group_by(label) %>%
-  mutate(max_count = max(count)) %>%
-  ggplot(aes(x = rank)) + 
-  geom_bar(
-    fill = dv_palette("qualitative")[1],
-    alpha = 0.6
-  ) + 
-  geom_vline(aes(xintercept = mean_rank), 
-             linetype = "dotted") +
-  # Use max_count for y-position scaling
+df %>%
+  select(starts_with("Q5"), -Q5_open, -Q5_9) %>%
+  pivot_longer(
+    cols = starts_with("Q5"),
+    names_to = "question",
+    values_to = "rank"
+  ) %>%
+  left_join(Q5_Options_cleaned_map, by = "question") %>%
+  add_count(label, rank, name = "count") %>%
+  mutate(
+    pct = count / n() * 100,
+    mean_rank = mean(rank),
+    sd_rank = sd(rank),
+    .by = label
+  ) %>%
+  ggplot(aes(x = rank)) +
+  geom_vline(aes(xintercept = mean_rank), colour = "#616161") +
+  geom_bar(aes(fill = factor(rank)), width = 0.8) +
   geom_text(
-    data = . %>% group_by(label) %>% slice(1),
-    aes(x = mean_rank, 
-        y = max_count * 0.8,
-        label = sprintf("Ø %.1f", mean_rank)),
-    vjust = -1, hjust=-0.3
+    data = . %>% slice_head(n = 1, by = label),
+    aes(x = mean_rank, y = -Inf, label = sprintf("Ø %.1f", mean_rank)),
+    vjust = 1.5,
+    hjust = 0.5,
+    family = "Fira Mono",
+    size = 4,
+    colour = "#616161"
   ) +
-  facet_wrap(~forcats::fct_reorder(label, mean_rank), ncol = 1) +
-  scale_x_continuous(
-    breaks = seq(min(df_long$rank), max(df_long$rank), 1),
-    trans = "reverse"
-  ) +
-  scale_y_continuous() +
+  facet_wrap(~ forcats::fct_reorder(label, mean_rank), ncol = 1) +
+  scale_x_reverse(breaks = scales::breaks_width(-1)) +
+  scale_fill_dv_d(palette = "sequential") +
+  coord_cartesian(clip = "off") +
   labs(
     title = "Ranking der Herausforderungen für aktive KI-Nutzung",
-    x = "Ranking",
-    y = "Häufigkeit"
+    x = "Ranking →",
+    y = "Häufigkeit →"
   ) +
-  theme_dv(
-    base_size = 16,
-    grid = "XY"
-  ) +
+  theme_dv(grid = "Yy") +
   theme(
-    strip.text = element_text(angle = 0),
-    panel.spacing = unit(1, "cm"),
-    legend.position = "none"
+    axis.text.x = element_text(margin = margin(t = 16)),
+    axis.ticks.y = element_line(colour = "#616161"),
+    legend.position = "none",
+    panel.grid = element_line(colour = "white"),
+    panel.ontop = TRUE,
+    panel.spacing = unit(1, "cm")
   )
-
-
-
 ```
 
 

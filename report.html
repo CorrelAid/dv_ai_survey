@@ -2,7 +2,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml" lang="de" xml:lang="de"><head>
 
 <meta charset="utf-8">
-<meta name="generator" content="quarto-1.6.39">
+<meta name="generator" content="quarto-1.6.40">
 
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
@@ -64,10 +64,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <script src="report_files/libs/quarto-html/tippy.umd.min.js"></script>
 <script src="report_files/libs/quarto-html/anchor.min.js"></script>
 <link href="report_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="report_files/libs/quarto-html/quarto-syntax-highlighting-e26003cea8cd680ca0c55a263523d882.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<link href="report_files/libs/quarto-html/quarto-syntax-highlighting-549806ee2085284f45b00abea8c6df48.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="report_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="report_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="report_files/libs/bootstrap/bootstrap-7e3ae6bc2264a23c642804a5dcfc52d8.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="report_files/libs/bootstrap/bootstrap-973236bd072d72a04ee9cd82dcc9cb29.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
 
 </head>
@@ -109,13 +109,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 
-<div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code>Anzahl der Befragten:  216 </code></pre>
-</div>
-</div>
+<p>Anzahl der Befragten: 216</p>
 <section id="anteil-der-befragten-die-ki-aktiv-nutzen-und-bereiche-der-ki-nutzung-in-der-vereinsarbeit-aktuell-und-gewünscht" class="level3">
-<h3 class="anchored" data-anchor-id="anteil-der-befragten-die-ki-aktiv-nutzen-und-bereiche-der-ki-nutzung-in-der-vereinsarbeit-aktuell-und-gewünscht">Anteil der Befragten, die KI aktiv nutzen und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)</h3>
+<h3 class="anchored" data-anchor-id="anteil-der-befragten-die-ki-aktiv-nutzen-und-bereiche-der-ki-nutzung-in-der-vereinsarbeit-aktuell-und-gewünscht">Anteil der Befragten, die KI aktiv nutzen, und Bereiche der KI-Nutzung in der Vereinsarbeit (Aktuell und Gewünscht)</h3>
 <ul>
 <li><p>Insgesamt nutzen 32% der Befragten aktiv KI. Den meisten Einsatz findet KI in der Öffentlichkeitsarbeit. 24.5% aller Befragten setzten KI in diesem Bereich ein, gefolgt von Kommunikation (14.4%). In anderen Bereichen, zum Beispiel in der Verwaltung (1.4%) wird KI eher nicht genutzt.</p></li>
 <li><p>Zusammen mit dem hohen Nutzungsanteil von Anwendungen wie ChatGPT, das von 28% aller Befragten und 91% aller KI-Nutzenden genutzt wird, deutet dies darauf hin, dass KI bis jetzt vor allem für die Erstellung von Texten verwendet wird.</p></li>
@@ -137,16 +133,61 @@ Abbildung&nbsp;1
 </div>
 </div>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 6 × 4
-  Anwendung                         Anzahl `% aller Befragten` `% der KI-Nutzer`
-  &lt;chr&gt;                              &lt;int&gt; &lt;chr&gt;               &lt;chr&gt;            
-1 "ChatGPT (kostenlose Version)"        62 28.7%               91.2%            
-2 "KI-Bildgeneratoren (z.B.:\nMidj…     28 13.0%               41.2%            
-3 "Microsoft Copilot"                   20 9.3%                29.4%            
-4 "KI basierte Übersetzungstools\n…     19 8.8%                27.9%            
-5 "Gemini (Google)"                     14 6.5%                20.6%            
-6 "Sprachassistenten (z.B.:\nAlexa…     11 5.1%                16.2%            </code></pre>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<colgroup>
+<col style="width: 52%">
+<col style="width: 8%">
+<col style="width: 20%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Anwendung</th>
+<th style="text-align: right;">Anzahl</th>
+<th style="text-align: right;">% aller Befragten</th>
+<th style="text-align: right;">% der KI-Nutzer</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">ChatGPT (kostenlose Version)</td>
+<td style="text-align: right;">62</td>
+<td style="text-align: right;">28.7%</td>
+<td style="text-align: right;">91.2%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KI-Bildgeneratoren (z.B.: Midjourney, Canva)</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">13.0%</td>
+<td style="text-align: right;">41.2%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Microsoft Copilot</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">9.3%</td>
+<td style="text-align: right;">29.4%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">KI basierte Übersetzungstools (z.B.: DeepL)</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">8.8%</td>
+<td style="text-align: right;">27.9%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gemini (Google)</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">6.5%</td>
+<td style="text-align: right;">20.6%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sprachassistenten (z.B.: Alexa)</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">5.1%</td>
+<td style="text-align: right;">16.2%</td>
+</tr>
+</tbody>
+</table>
 </div>
 </div>
 <div class="cell">
@@ -196,7 +237,7 @@ Abbildung&nbsp;1
 <li><p>Auch hier gibt es Unterschiede zwischen KI-Nutzenden und solchen, die es nicht tun. Mit einem Durchschnitt von 31.5 sind sich Nicht-Nutzende relativ einig, dass es keinen Bedarf an KI in der Vereinsarbeit gibt. Bei den KI-Nutzenden hingegen gibt es diesbezüglich Uneinigkeit. Hier ist der Durchschnitt ungefähr bei 50.</p></li>
 <li><p>Auch hier hat die Nutzung von KI einen statistisch signifikanten positiven Einfluss auf die Einschätzung des Bedarfs.</p></li>
 </ul>
-<div class="cell" height="20">
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-KI-opinion" class="quarto-float quarto-figure quarto-figure-center anchored" width="960">
 <figure class="quarto-float quarto-float-fig figure">
@@ -233,13 +274,16 @@ Abbildung&nbsp;3
 </div>
 <p>Correlation of Q8 with KI usage</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dbl</span>(<span class="sc">~</span> <span class="fu">cor</span>(.x, df<span class="sc">$</span>ki_usage, <span class="at">use =</span> <span class="st">"pairwise.complete.obs"</span>))</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> <span class="fu">set_names</span>(correlations, <span class="fu">names</span>(df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>))))</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(correlations)</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dbl</span>(<span class="sc">~</span> <span class="fu">cor</span>(.x, df<span class="sc">$</span>ki_usage, <span class="at">use =</span> <span class="st">"pairwise.complete.obs"</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>correlations <span class="ot">&lt;-</span> <span class="fu">set_names</span>(</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  correlations,</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">names</span>(df <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="fu">matches</span>(<span class="st">"^Q8_[0-9]+$"</span>)))</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(correlations)</span></code><button title="In die Zwischenablage kopieren" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>       Q8_1        Q8_2        Q8_3        Q8_4        Q8_5        Q8_6 
  0.37760485  0.40842699  0.08565472 -0.17464937 -0.12103040  0.24222744 
@@ -266,7 +310,7 @@ Abbildung&nbsp;3
 <li><p>Bei den Herausforderungen von KI hingegen sind sich Nutzende dieser Technologie und solche, die dies nicht tun, relativ einig. Hier werden mangelndes Know-How und Datenschutzbedenken als am zutreffendsten angegeben. Ebenfalls häufig als herausfordernd bewertet ist die Schwierigkeit, die richtige KI-Anwendung zu finden. Hier ist jedoch interessant, dass es eine größere Menge an Leuten gibt, die dies wiederum nicht als herausfordernd bewerten, was in diesem Punkt für Uneinigkeit spricht.</p></li>
 <li><p>Ethische Bedenken und Kosten-Nutzen-Relation scheinen die Befragten jedoch klar nicht als herausfordernd zu empfinden.</p></li>
 </ul>
-<div class="cell" height="20">
+<div class="cell">
 <div class="cell-output-display">
 <div id="fig-KI-challenges" class="quarto-float quarto-figure quarto-figure-center anchored" width="960">
 <figure class="quarto-float quarto-float-fig figure">
