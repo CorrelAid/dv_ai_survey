@@ -486,7 +486,7 @@ df %>%
   labs(
     title = "Ranking der Herausforderungen für aktive KI-Nutzung",
     x = "Ranking →",
-    y = "Häufigkeit →"
+    y = "← Häufigkeit →"
   ) +
   theme_dv(grid = "XxY") +
   theme(
