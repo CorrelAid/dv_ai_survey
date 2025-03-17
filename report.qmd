@@ -468,7 +468,11 @@ df %>%
     .by = label
   ) %>%
   ggplot(aes(x = rank)) +
-  geom_vline(aes(xintercept = mean_rank), colour = "#616161") +
+  geom_vline(
+    aes(xintercept = mean_rank),
+    colour = "#616161",
+    linetype = "dashed",
+  ) +
   geom_bar(aes(fill = factor(rank)), width = 0.8) +
   geom_text(
     data = . %>% slice_head(n = 1, by = label),
@@ -488,10 +492,9 @@ df %>%
     x = "Ranking →",
     y = "← Häufigkeit →"
   ) +
-  theme_dv(grid = "XxY") +
+  theme_dv(grid = "Y") +
   theme(
     axis.text.x = element_text(margin = margin(t = 16)),
-    axis.ticks.y = element_line(colour = "#616161"),
     legend.position = "none",
     panel.spacing = unit(1, "cm")
   )
